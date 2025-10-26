@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Input } from './ui/input';
-import { Button } from './ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Badge } from './ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Input } from '../components/ui/input';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import {
   Table,
   TableBody,
@@ -11,7 +11,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from './ui/table';
+} from '../components/ui/table';
 import {
   COUNTRIES,
   getCategoryIcon,
@@ -36,23 +36,23 @@ interface Submission {
   wikipediaArticle?: string;
   verifierNotes?: string;
   verifiedAt?: string;
+  verifiedDate?: string;
   fileType?: string;
   fileName?: string;
+  mediaType?: string;
+  reliability?: string;
   createdAt: string;
   updatedAt: string;
 }
 import { Search, Filter, ExternalLink, Calendar, Globe, BookOpen } from 'lucide-react';
 
-interface PublicDirectoryProps {
-  onNavigate: (page: string) => void;
-}
-
-export const PublicDirectory: React.FC<PublicDirectoryProps> = ({ onNavigate }) => {
+export const PublicDirectory: React.FC = () => {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCountry, setFilterCountry] = useState<string>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('approved');
+  const [filterReliability, setFilterReliability] = useState<string>('all');
   const [filterMediaType, setFilterMediaType] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('date-desc');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');

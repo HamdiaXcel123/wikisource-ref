@@ -1,23 +1,21 @@
 import { useState } from 'react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Textarea } from './ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Textarea } from '../components/ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 import { useAuth } from '../lib/auth-context';
 import { COUNTRIES } from '../lib/mock-data';
 import { submissionApi } from '../lib/api';
 import { toast } from 'sonner';
 import { Upload, Link2, FileText, CheckCircle, AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription } from './ui/alert';
+import { Alert, AlertDescription } from '../components/ui/alert';
 
-interface SubmissionFormProps {
-  onNavigate: (page: string) => void;
-}
-
-export const SubmissionForm: React.FC<SubmissionFormProps> = ({ onNavigate }) => {
+export const SubmissionForm: React.FC = () => {
+  const navigate = useNavigate();
   const { user, updateUser } = useAuth();
   const [submissionType, setSubmissionType] = useState<'url' | 'pdf'>('url');
   const [url, setUrl] = useState('');
@@ -58,7 +56,7 @@ export const SubmissionForm: React.FC<SubmissionFormProps> = ({ onNavigate }) =>
 
     if (!user) {
       toast.error('Please login to submit references');
-      onNavigate('auth');
+      navigate('/auth');
       return;
     }
 
@@ -114,7 +112,7 @@ export const SubmissionForm: React.FC<SubmissionFormProps> = ({ onNavigate }) =>
       setFileName('');
 
       // Navigate to directory
-      setTimeout(() => onNavigate('directory'), 1500);
+      setTimeout(() => navigate('/directory'), 1500);
     } catch (error) {
       toast.error('Submission failed. Please try again.');
     } finally {
@@ -133,7 +131,7 @@ export const SubmissionForm: React.FC<SubmissionFormProps> = ({ onNavigate }) =>
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => onNavigate('auth')}>Go to Login</Button>
+            <Button onClick={() => navigate('/auth')}>Go to Login</Button>
           </CardContent>
         </Card>
       </div>
@@ -163,7 +161,7 @@ export const SubmissionForm: React.FC<SubmissionFormProps> = ({ onNavigate }) =>
               <Label>Submission Type *</Label>
               <RadioGroup
                 value={submissionType}
-                onValueChange={(value) => setSubmissionType(value as 'url' | 'pdf')}
+                onValueChange={(value: string) => setSubmissionType(value as 'url' | 'pdf')}
                 className="flex space-x-4"
               >
                 <div className="flex items-center space-x-2">
@@ -271,14 +269,14 @@ export const SubmissionForm: React.FC<SubmissionFormProps> = ({ onNavigate }) =>
               <Label>Source Category *</Label>
               <RadioGroup
                 value={category}
-                onValueChange={(value) => setCategory(value as any)}
+                onValueChange={(value: string) => setCategory(value as 'primary' | 'secondary' | 'unreliable')}
                 className="space-y-3"
               >
                 <div className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
                   <RadioGroupItem value="primary" id="cat-primary" className="mt-1" />
                   <Label htmlFor="cat-primary" className="cursor-pointer flex-1">
                     <div className="flex items-center space-x-2 mb-1">
-                      <span className="text-xl">📗</span>
+                      <span className="text-xl">ðŸ“—</span>
                       <span>Primary Source</span>
                     </div>
                     <p className="text-sm text-gray-500">
@@ -291,7 +289,7 @@ export const SubmissionForm: React.FC<SubmissionFormProps> = ({ onNavigate }) =>
                   <RadioGroupItem value="secondary" id="cat-secondary" className="mt-1" />
                   <Label htmlFor="cat-secondary" className="cursor-pointer flex-1">
                     <div className="flex items-center space-x-2 mb-1">
-                      <span className="text-xl">📘</span>
+                      <span className="text-xl">ðŸ“˜</span>
                       <span>Secondary Source</span>
                     </div>
                     <p className="text-sm text-gray-500">
@@ -304,7 +302,7 @@ export const SubmissionForm: React.FC<SubmissionFormProps> = ({ onNavigate }) =>
                   <RadioGroupItem value="unreliable" id="cat-unreliable" className="mt-1" />
                   <Label htmlFor="cat-unreliable" className="cursor-pointer flex-1">
                     <div className="flex items-center space-x-2 mb-1">
-                      <span className="text-xl">🚫</span>
+                      <span className="text-xl">ðŸš«</span>
                       <span>Potentially Unreliable</span>
                     </div>
                     <p className="text-sm text-gray-500">
@@ -352,7 +350,7 @@ export const SubmissionForm: React.FC<SubmissionFormProps> = ({ onNavigate }) =>
                   </>
                 )}
               </Button>
-              <Button type="button" variant="outline" onClick={() => onNavigate('directory')}>
+              <Button type="button" variant="outline" onClick={() => navigate('/directory')}>
                 Cancel
               </Button>
             </div>

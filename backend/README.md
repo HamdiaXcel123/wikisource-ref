@@ -112,13 +112,221 @@ cp .env.example .env
 
 # Initialize database
 flask db upgrade
-python scripts/seed_countries.py
 
-# Run development server
-python run.py
+# Start production server
+npm start
 ```
 
 ## Environment Variables
+
+Create a `.env` file in the backend directory:
+
+```env
+PORT=5000
+NODE_ENV=development
+MONGODB_URI=mongodb://localhost:27017/wikisource-verifier
+JWT_SECRET=your-super-secret-jwt-key
+JWT_REFRESH_SECRET=your-super-secret-refresh-key
+JWT_EXPIRE=15m
+JWT_REFRESH_EXPIRE=7d
+FRONTEND_URL=http://localhost:5173
+MAX_FILE_SIZE=10485760
+UPLOAD_PATH=./uploads
+```
+
+## API Endpoints
+
+### Authentication
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - Login user
+- `POST /api/auth/logout` - Logout user
+- `GET /api/auth/me` - Get current user
+- `POST /api/auth/refresh` - Refresh access token
+- `PUT /api/auth/profile` - Update profile
+- `PUT /api/auth/password` - Change password
+
+### Submissions
+- `POST /api/submissions` - Create submission
+- `GET /api/submissions` - Get all submissions
+- `GET /api/submissions/:id` - Get single submission
+- `GET /api/submissions/my/submissions` - Get user's submissions
+- `PUT /api/submissions/:id` - Update submission
+- `DELETE /api/submissions/:id` - Delete submission
+- `PUT /api/submissions/:id/verify` - Verify submission
+- `GET /api/submissions/pending/country` - Get pending for country
+- `GET /api/submissions/stats` - Get statistics
+
+### Users
+- `GET /api/users/leaderboard` - Get leaderboard
+- `GET /api/users` - Get all users (admin)
+- `GET /api/users/:id` - Get user profile
+- `POST /api/users/:id/badge` - Award badge (admin)
+- `PUT /api/users/:id/role` - Update role (admin)
+- `PUT /api/users/:id/deactivate` - Deactivate user (admin)
+- `PUT /api/users/:id/activate` - Activate user (admin)
+
+## Project Structure
+
+```
+backend/
+├── src/
+│   ├── config/
+│   │   └── database.js          # MongoDB connection
+│   ├── controllers/
+│   │   ├── authController.js    # Authentication logic
+│   │   ├── submissionController.js
+│   │   └── userController.js
+│   ├── middleware/
+│   │   ├── auth.js              # JWT verification
+│   │   ├── errorHandler.js      # Error handling
+│   │   └── validator.js         # Input validation
+│   ├── models/
+│   │   ├── User.js              # User schema
+│   │   └── Submission.js        # Submission schema
+│   ├── routes/
+│   │   ├── authRoutes.js
+│   │   ├── submissionRoutes.js
+│   │   └── userRoutes.js
+│   ├── utils/
+│   │   └── jwt.js               # Token utilities
+│   └── server.js                # Entry point
+├── .env.example
+├── .gitignore
+├── package.json
+└── README.md
+```
+
+## Database Models
+
+### User Model
+```javascript
+{
+  username: String (unique),
+  email: String (unique),
+  password: String (hashed),
+  country: String,
+  role: String (contributor|verifier|admin),
+  points: Number,
+  badges: Array,
+  isActive: Boolean,
+  refreshTokens: Array,
+  timestamps: true
+}
+```
+
+### Submission Model
+```javascript
+{
+  url: String,
+  title: String,
+  publisher: String,
+  country: String,
+  category: String (primary|secondary|unreliable),
+  status: String (pending|approved|rejected),
+  submitter: ObjectId (ref: User),
+  verifier: ObjectId (ref: User),
+  wikipediaArticle: String,
+  verifierNotes: String,
+  verifiedAt: Date,
+  fileType: String,
+  fileName: String,
+  tags: Array,
+  timestamps: true
+}
+```
+
+## Security Features
+
+- JWT-based authentication
+- Password hashing with bcrypt
+- HTTP-only cookies
+- CORS protection
+- Rate limiting (100 requests per 15 minutes)
+- Helmet security headers
+- Input validation and sanitization
+- Role-based access control
+
+## Error Handling
+
+All errors are handled centrally and return consistent JSON responses:
+
+```json
+{
+  "success": false,
+  "message": "Error message",
+  "errors": [...]  // Optional validation errors
+}
+```
+
+## Testing
+
+```bash
+# Health check
+curl http://localhost:5000/health
+
+# Register user
+curl -X POST http://localhost:5000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"test","email":"test@example.com","password":"password123","country":"Ghana"}'
+
+# Login
+curl -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"test","password":"password123"}'
+```
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Run in development mode (with auto-reload)
+npm run dev
+
+# Run in production mode
+npm start
+```
+
+## Deployment
+
+### Using PM2
+
+```bash
+# Install PM2
+npm install -g pm2
+
+# Start application
+pm2 start src/server.js --name wikisource-api
+
+# Save PM2 configuration
+pm2 save
+
+# Setup PM2 to start on boot
+pm2 startup
+```
+
+### Environment Setup
+
+1. Set `NODE_ENV=production`
+2. Use production MongoDB instance
+3. Generate secure JWT secrets
+4. Configure CORS for production domain
+5. Enable HTTPS
+
+## Documentation
+
+- Full API documentation: See `../API_DOCUMENTATION.md`
+- Setup guide: See `../SETUP_GUIDE.md`
+- Quick reference: See `../QUICK_REFERENCE.md`
+
+## License
+
+MIT
+
+## Support
+
+For issues or questions, please refer to the main project documentation.
 
 ```bash
 FLASK_ENV=development

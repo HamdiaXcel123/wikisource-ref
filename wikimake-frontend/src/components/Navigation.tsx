@@ -1,3 +1,4 @@
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { BookOpen, Search, Upload, User, LogOut, Award, Shield, LogIn } from 'lucide-react';
 import { Button } from './ui/button';
 import { useAuth } from '../lib/auth-context';
@@ -11,21 +12,20 @@ import {
 } from './ui/dropdown-menu';
 import { Badge } from './ui/badge';
 
-interface NavigationProps {
-  currentPage: string;
-  onNavigate: (page: string) => void;
-}
-
-export const Navigation: React.FC<NavigationProps> = ({ currentPage, onNavigate }) => {
+export const Navigation: React.FC = () => {
   const { user, logout } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  const isActive = (path: string) => location.pathname === path;
 
   return (
     <nav className="border-b bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center space-x-8">
-            <button
-              onClick={() => onNavigate('landing')}
+            <Link
+              to="/"
               className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
             >
               <BookOpen className="h-8 w-8" />
@@ -33,12 +33,12 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPage, onNavigate 
                 <span className="font-semibold">WikiSourceVerifier</span>
                 <span className="text-xs text-gray-500">Community Reference Platform</span>
               </div>
-            </button>
+            </Link>
 
             <div className="hidden md:flex items-center space-x-1">
               <Button
-                variant={currentPage === 'directory' ? 'default' : 'ghost'}
-                onClick={() => onNavigate('directory')}
+                variant={isActive('/directory') ? 'default' : 'ghost'}
+                onClick={() => navigate('/directory')}
                 className="flex items-center space-x-2"
               >
                 <Search className="h-4 w-4" />
@@ -48,8 +48,8 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPage, onNavigate 
               {user && (
                 <>
                   <Button
-                    variant={currentPage === 'submit' ? 'default' : 'ghost'}
-                    onClick={() => onNavigate('submit')}
+                    variant={isActive('/submit') ? 'default' : 'ghost'}
+                    onClick={() => navigate('/submit')}
                     className="flex items-center space-x-2"
                   >
                     <Upload className="h-4 w-4" />
@@ -58,8 +58,8 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPage, onNavigate 
 
                   {(user.role === 'admin' || user.role === 'verifier') && (
                     <Button
-                      variant={currentPage === 'admin' ? 'default' : 'ghost'}
-                      onClick={() => onNavigate('admin')}
+                      variant={isActive('/admin') ? 'default' : 'ghost'}
+                      onClick={() => navigate('/admin')}
                       className="flex items-center space-x-2"
                     >
                       <Shield className="h-4 w-4" />
@@ -91,11 +91,11 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPage, onNavigate 
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => onNavigate('profile')}>
+                  <DropdownMenuItem onClick={() => navigate('/profile')}>
                     <User className="h-4 w-4 mr-2" />
                     Profile
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onNavigate('profile')}>
+                  <DropdownMenuItem onClick={() => navigate('/profile')}>
                     <Award className="h-4 w-4 mr-2" />
                     Badges ({user.badges.length})
                   </DropdownMenuItem>
@@ -107,7 +107,7 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPage, onNavigate 
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button onClick={() => onNavigate('auth')} className="flex items-center space-x-2">
+              <Button onClick={() => navigate('/auth')} className="flex items-center space-x-2">
                 <LogIn className="h-4 w-4" />
                 <span>Login</span>
               </Button>
@@ -118,9 +118,9 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPage, onNavigate 
         {/* Mobile Navigation */}
         <div className="md:hidden flex items-center space-x-1 pb-3 overflow-x-auto">
           <Button
-            variant={currentPage === 'directory' ? 'default' : 'ghost'}
+            variant={isActive('/directory') ? 'default' : 'ghost'}
             size="sm"
-            onClick={() => onNavigate('directory')}
+            onClick={() => navigate('/directory')}
           >
             <Search className="h-4 w-4 mr-1" />
             Directory
@@ -129,9 +129,9 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPage, onNavigate 
           {user && (
             <>
               <Button
-                variant={currentPage === 'submit' ? 'default' : 'ghost'}
+                variant={isActive('/submit') ? 'default' : 'ghost'}
                 size="sm"
-                onClick={() => onNavigate('submit')}
+                onClick={() => navigate('/submit')}
               >
                 <Upload className="h-4 w-4 mr-1" />
                 Submit
@@ -139,9 +139,9 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPage, onNavigate 
 
               {(user.role === 'admin' || user.role === 'verifier') && (
                 <Button
-                  variant={currentPage === 'admin' ? 'default' : 'ghost'}
+                  variant={isActive('/admin') ? 'default' : 'ghost'}
                   size="sm"
-                  onClick={() => onNavigate('admin')}
+                  onClick={() => navigate('/admin')}
                 >
                   <Shield className="h-4 w-4 mr-1" />
                   Admin

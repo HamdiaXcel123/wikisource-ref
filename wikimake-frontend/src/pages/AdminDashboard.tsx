@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Button } from './ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Badge } from './ui/badge';
-import { Textarea } from './ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Textarea } from '../components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from './ui/select';
+} from '../components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -18,7 +19,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from './ui/dialog';
+} from '../components/ui/dialog';
 import { useAuth } from '../lib/auth-context';
 import {
   getCategoryIcon,
@@ -50,11 +51,8 @@ interface Submission {
 }
 import { CheckCircle, XCircle, Eye, Clock, TrendingUp, Users, FileCheck } from 'lucide-react';
 
-interface AdminDashboardProps {
-  onNavigate: (page: string) => void;
-}
-
-export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
+export const AdminDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
@@ -186,7 +184,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => onNavigate('landing')}>Go to Home</Button>
+            <Button onClick={() => navigate('/')}>Go to Home</Button>
           </CardContent>
         </Card>
       </div>
@@ -277,7 +275,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
             </Card>
           ) : (
             <div className="space-y-4">
-              {pendingSubmissions.map((submission) => (
+              {pendingSubmissions.map((submission: any) => (
                 <Card key={submission.id}>
                   <CardContent className="pt-6">
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
@@ -375,7 +373,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
           </div>
 
           <div className="space-y-4">
-            {verifiedSubmissions.map((submission) => (
+            {verifiedSubmissions.map((submission: any) => (
               <Card key={submission.id}>
                 <CardContent className="pt-6">
                   <div className="flex items-start space-x-3">

@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { BookOpen, CheckCircle, Users, TrendingUp, ArrowRight } from 'lucide-react';
-import { Button } from './ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { useAuth } from '../lib/auth-context';
 import { submissionApi, userApi } from '../lib/api';
 
-interface LandingPageProps {
-  onNavigate: (page: string) => void;
-}
-
-export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
+export const LandingPage: React.FC = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0 });
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
@@ -60,21 +58,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             {user ? (
               <>
-                <Button size="lg" onClick={() => onNavigate('submit')} className="flex items-center space-x-2">
+                <Button size="lg" onClick={() => navigate('/submit')} className="flex items-center space-x-2">
                   <span>Submit a Reference</span>
                   <ArrowRight className="h-5 w-5" />
                 </Button>
-                <Button size="lg" variant="outline" onClick={() => onNavigate('directory')}>
+                <Button size="lg" variant="outline" onClick={() => navigate('/directory')}>
                   Browse Directory
                 </Button>
               </>
             ) : (
               <>
-                <Button size="lg" onClick={() => onNavigate('auth')} className="flex items-center space-x-2">
+                <Button size="lg" onClick={() => navigate('/auth')} className="flex items-center space-x-2">
                   <span>Get Started</span>
                   <ArrowRight className="h-5 w-5" />
                 </Button>
-                <Button size="lg" variant="outline" onClick={() => onNavigate('directory')}>
+                <Button size="lg" variant="outline" onClick={() => navigate('/directory')}>
                   Explore Sources
                 </Button>
               </>
@@ -212,7 +210,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
         <div className="mt-24">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-gray-900">Top Contributors</h2>
-            <Button variant="outline" onClick={() => onNavigate('directory')}>
+            <Button variant="outline" onClick={() => navigate('/directory')}>
               View All
             </Button>
           </div>
@@ -271,7 +269,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
             verifiable references.
           </p>
           {!user && (
-            <Button size="lg" onClick={() => onNavigate('auth')} className="flex items-center space-x-2 mx-auto">
+            <Button size="lg" onClick={() => navigate('/auth')} className="flex items-center space-x-2 mx-auto">
               <span>Create Free Account</span>
               <ArrowRight className="h-5 w-5" />
             </Button>

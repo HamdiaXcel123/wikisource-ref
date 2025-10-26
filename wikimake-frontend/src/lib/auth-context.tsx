@@ -1,11 +1,24 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, getUser, saveUser, mockUsers } from './mock-data';
+import { authApi, api } from './api';
+import { toast } from 'sonner';
+
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  country: string;
+  role: 'contributor' | 'verifier' | 'admin';
+  points: number;
+  badges: Array<{ name: string; icon: string; earnedAt: string }>;
+  joinDate: string;
+  isActive: boolean;
+}
 
 interface AuthContextType {
   user: User | null;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
-  register: (username: string, email: string, country: string) => Promise<boolean>;
+  register: (username: string, email: string, password: string, country: string) => Promise<boolean>;
   updateUser: (updates: Partial<User>) => void;
 }
 
@@ -13,67 +26,117 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load user from localStorage on mount
-    const storedUser = getUser();
-    if (storedUser) {
-      setUser(storedUser);
-    }
+    // Check if user is logged in on mount
+    const checkAuth = async () => {
+      if (api.isAuthenticated()) {
+        try {
+          const response = await authApi.getMe();
+          setUser(response.user);
+        } catch (error) {
+          // Token invalid, clear auth
+          api.clearAuth();
+        }
+      }
+      setLoading(false);
+    };
+    
+    checkAuth();
   }, []);
 
   const login = async (username: string, password: string): Promise<boolean> => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Mock authentication - check against mock users
-    const foundUser = mockUsers.find(u => u.username === username);
-    if (foundUser) {
-      setUser(foundUser);
-      saveUser(foundUser);
-      return true;
-    }
-    return false;
-  };
-
-  const logout = () => {
-    setUser(null);
-    saveUser(null);
-  };
-
-  const register = async (username: string, email: string, country: string): Promise<boolean> => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Check if username exists
-    const exists = mockUsers.some(u => u.username === username);
-    if (exists) {
+    try {
+      console.log('=== FRONTEND LOGIN ATTEMPT ===');
+      console.log('Username:', username);
+      console.log('Password length:', password.length);
+      
+      const response = await authApi.login(username, password);
+      
+      console.log('Login response:', response);
+      
+      if (response.success) {
+        api.setTokens(response.accessToken, response.refreshToken);
+        setUser(response.user);
+        toast.success('Login successful!');
+        console.log('✅ Login successful, user:', response.user);
+        return true;
+      }
+      
+      console.log('❌ Login failed: Invalid credentials');
+      toast.error('Invalid credentials');
+      return false;
+    } catch (error) {
+      console.log('❌ Login error:', error);
+      toast.error(error instanceof Error ? error.message : 'Login failed');
       return false;
     }
-
-    // Create new user
-    const newUser: User = {
-      id: Date.now().toString(),
-      username,
-      email,
-      country,
-      role: 'contributor',
-      points: 0,
-      badges: [],
-      joinDate: new Date().toISOString().split('T')[0],
-    };
-
-    setUser(newUser);
-    saveUser(newUser);
-    mockUsers.push(newUser);
-    return true;
   };
 
-  const updateUser = (updates: Partial<User>) => {
+  const logout = async () => {
+    try {
+      await authApi.logout();
+    } catch (error) {
+      // Ignore logout errors
+    } finally {
+      api.clearAuth();
+      setUser(null);
+      toast.success('Logged out successfully');
+    }
+  };
+
+  const register = async (username: string, email: string, password: string, country: string): Promise<boolean> => {
+    try {
+      console.log('=== FRONTEND REGISTRATION ATTEMPT ===');
+      console.log('Username:', username);
+      console.log('Email:', email);
+      console.log('Country:', country);
+      console.log('Password length:', password.length);
+      
+      const response = await authApi.register(username, email, password, country);
+      
+      console.log('Registration response:', response);
+      
+      if (response.success) {
+        api.setTokens(response.accessToken, response.refreshToken);
+        setUser(response.user);
+        toast.success('Registration successful!');
+        console.log('✅ Registration successful, user:', response.user);
+        return true;
+      }
+      
+      console.log('❌ Registration failed');
+      toast.error('Registration failed');
+      return false;
+    } catch (error) {
+      console.log('❌ Registration error:', error);
+      toast.error(error instanceof Error ? error.message : 'Registration failed');
+      return false;
+    }
+  };
+
+  const updateUser = async (updates: Partial<User>) => {
     if (user) {
-      const updatedUser = { ...user, ...updates };
-      setUser(updatedUser);
-      saveUser(updatedUser);
+      try {
+        if (updates.email || updates.country) {
+          const response = await authApi.updateProfile(
+            updates.email || user.email,
+            updates.country || user.country
+          );
+          
+          if (response.success) {
+            setUser(response.user);
+            toast.success('Profile updated successfully');
+          }
+        } else {
+          // For other updates like points, badges (from backend events)
+          const updatedUser = { ...user, ...updates };
+          setUser(updatedUser);
+        }
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Update failed');
+      }
     }
   };
 

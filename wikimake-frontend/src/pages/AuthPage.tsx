@@ -1,20 +1,18 @@
 import { useState } from 'react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { useAuth } from '../lib/auth-context';
 import { COUNTRIES } from '../lib/mock-data';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
-interface AuthPageProps {
-  onNavigate: (page: string) => void;
-}
-
-export const AuthPage: React.FC<AuthPageProps> = ({ onNavigate }) => {
+export const AuthPage: React.FC = () => {
+  const navigate = useNavigate();
   const { login, register } = useAuth();
   const [loading, setLoading] = useState(false);
 
@@ -35,7 +33,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onNavigate }) => {
     try {
       const success = await login(loginUsername, loginPassword);
       if (success) {
-        onNavigate('landing');
+        navigate('/');
       }
     } catch (error) {
       // Error already handled in auth context
@@ -57,7 +55,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onNavigate }) => {
     try {
       const success = await register(registerUsername, registerEmail, registerPassword, registerCountry);
       if (success) {
-        onNavigate('landing');
+        navigate('/');
       }
     } catch (error) {
       // Error already handled in auth context
