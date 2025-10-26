@@ -1,631 +1,145 @@
-# WikiSourceVerifier Backend
-
-A community-driven reference verification platform API for Wikipedia editors and Wikimedia contributors.
-
-## Overview
-
-WikiSourceVerifier provides a REST API for crowdsourcing and curating credible, country-based reference databases that support better citation practices on Wikipedia.
-
-## Tech Stack
-
-- **Framework**: Flask (Python 3.9+) with Flask-RESTful
-- **Database**: PostgreSQL (production) / SQLite (development)
-- **Authentication**: Wikimedia OAuth 2.0
-- **ORM**: SQLAlchemy
-- **Migrations**: Alembic
-- **Validation**: Marshmallow
-- **API Documentation**: Flask-APISPEC (OpenAPI/Swagger)
-- **Task Queue**: Celery + Redis
-- **Testing**: Pytest + Coverage
-
-## Project Structure
-
-```
-backend/
-├── app/
-│   ├── __init__.py              # Flask app factory
-│   ├── config.py                # Configuration management
-│   ├── models/                  # SQLAlchemy models
-│   │   ├── user.py
-│   │   ├── reference.py
-│   │   ├── verification.py
-│   │   ├── country.py
-│   │   └── badge.py
-│   ├── routes/                  # API endpoints
-│   │   ├── auth.py
-│   │   ├── references.py
-│   │   ├── verifications.py
-│   │   ├── admin.py
-│   │   └── gamification.py
-│   ├── services/                # Business logic
-│   │   ├── auth_service.py
-│   │   ├── reference_service.py
-│   │   ├── verification_service.py
-│   │   └── gamification_service.py
-│   ├── middleware/              # Custom middleware
-│   │   ├── auth_middleware.py
-│   │   └── rate_limiter.py
-│   └── utils/                   # Helper functions
-├── migrations/                  # Alembic migrations
-├── tests/                       # Test suite
-├── scripts/                     # Utility scripts
-├── requirements.txt
-└── run.py
-```
-
-## Core Features
-
-1. **Reference Submission System** - Submit URLs, PDFs, DOIs with country categorization
-2. **Verification Workflow** - Country-specific admin review and approval system
-3. **Public Reference Directory** - Searchable, filterable verified sources database
-4. **Gamification System** - Points, badges, and leaderboards for contributors
-5. **Wikimedia OAuth** - Secure authentication via Wikimedia accounts
-
-## API Endpoints
-
-### Authentication
-- `POST /api/v1/auth/login` - Initiate Wikimedia OAuth
-- `GET /api/v1/auth/callback` - OAuth callback
-- `GET /api/v1/auth/me` - Get current user
-
-### References
-- `POST /api/v1/references` - Submit reference
-- `GET /api/v1/references` - List verified references
-- `GET /api/v1/references/:id` - Get details
-- `GET /api/v1/references/search` - Advanced search
-
-### Verifications (Admin)
-- `GET /api/v1/verifications/pending` - Pending queue
-- `PUT /api/v1/verifications/:id` - Update status
-- `POST /api/v1/verifications/:id/flag` - Flag for review
-
-### Gamification
-- `GET /api/v1/leaderboard` - Global leaderboard
-- `GET /api/v1/users/:id/badges` - User badges
-- `GET /api/v1/users/:id/stats` - User statistics
-
-## Database Schema
-
-### Core Tables
-- **users** - User accounts with roles and points
-- **countries** - ISO country codes and metadata
-- **references** - Submitted sources with metadata
-- **verifications** - Verification records by admins
-- **badges** - Achievement definitions
-- **user_badges** - Earned badges junction table
-
-## Installation
-
-```bash
-# Clone and setup
-git clone <repo-url>
-cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your settings
-
-# Initialize database
-flask db upgrade
-python scripts/seed_countries.py
-
-# Run development server
-python run.py
-```
-
-## Environment Variables
-
-```bash
-FLASK_ENV=development
-SECRET_KEY=your-secret-key
-DATABASE_URL=postgresql://user:pass@localhost/dbname
-WIKIMEDIA_CONSUMER_KEY=your-key
-WIKIMEDIA_CONSUMER_SECRET=your-secret
-REDIS_URL=redis://localhost:6379/0
-```
-
-## Testing
-
-```bash
-pytest                              # Run all tests
-pytest --cov=app --cov-report=html  # With coverage
-```
-
-## Deployment
-
-### Wikimedia Toolforge
-```bash
-ssh username@login.toolforge.org
-toolforge webservice --backend=kubernetes python3.9 start
-```
-
-### Docker
-```bash
-docker-compose up -d
-```
-
----
-
-# Developer Task Breakdown
-
-Backend development is divided into 5 parallel tracks for developers 1-5.
-
----
-
-## TASK 1: Core Infrastructure & Authentication System
-
-**Developer 1 - Backend Infrastructure Lead**
-
-### Objective
-Set up foundational backend architecture, database configuration, and Wikimedia OAuth authentication.
-
-### Deliverables
-
-#### 1.1 Project Setup
-- Initialize Flask application with factory pattern
-- Configure SQLAlchemy and Alembic
-- Create configuration management (dev/test/prod)
-- Set up `requirements.txt` and `.env.example`
-- Create `run.py` entry point
-
-#### 1.2 Database Models
-- **Country Model** (`app/models/country.py`)
-  - Fields: code (PK), name, region, active
-  - ISO 3166-1 alpha-2 validation
-- **User Model** (`app/models/user.py`)
-  - Fields: id, wikimedia_id, username, email, role, country_code, points
-  - Roles: contributor, country_admin, global_admin
-  - Methods: `is_admin()`, `can_verify_country()`
-- Create initial migrations
-- Write country seed script
-
-#### 1.3 Wikimedia OAuth Integration
-- **Auth Service** (`app/services/auth_service.py`)
-  - `initiate_oauth()` - Start OAuth flow
-  - `handle_callback()` - Process callback
-  - `get_user_info()` - Fetch Wikimedia user data
-  - `create_or_update_user()` - User management
-- **JWT Implementation**
-  - Token generation and validation
-  - Refresh token logic
-- **Auth Middleware** (`app/middleware/auth_middleware.py`)
-  - `@require_auth` decorator
-  - `@require_role(role)` decorator
-  - Token validation and user injection
-
-#### 1.4 Auth API Routes
-- `POST /api/v1/auth/login` - Initiate OAuth
-- `GET /api/v1/auth/callback` - OAuth callback
-- `POST /api/v1/auth/logout` - Logout
-- `GET /api/v1/auth/me` - Current user info
-
-#### 1.5 Testing
-- Unit tests for auth service
-- Integration tests for auth endpoints
-- OAuth flow end-to-end test
-- Role-based access control tests
-
-### Dependencies
-- Wikimedia OAuth consumer credentials
-- Blocks: All other tasks
-
-### Duration: 2 weeks
-
----
-
-## TASK 2: Reference Submission & Management System
-
-**Developer 2 - Reference Management Lead**
-
-### Objective
-Build complete reference submission system with validation, file uploads, and public API.
-
-### Deliverables
-
-#### 2.1 Reference Model
-- **Reference Model** (`app/models/reference.py`)
-  - Fields: id, url, title, publisher, doi, country_code, category, media_type, wikipedia_article, submitted_by, status
-  - Enums: category (primary/secondary/unreliable), media_type (web/pdf/book/journal), status (pending/verified/rejected)
-  - Relationships: User, Country, Verifications
-  - Indexes: country_code, status, category, created_at
-  - Methods: `is_verified()`, `can_be_edited_by(user)`
-
-#### 2.2 Validation & Schemas
-- **Marshmallow Schemas** (`app/schemas/reference_schema.py`)
-  - `ReferenceSubmissionSchema` - POST validation
-  - `ReferenceResponseSchema` - GET serialization
-  - `ReferenceSearchSchema` - Search filters
-- **Custom Validators** (`app/utils/validators.py`)
-  - `validate_url()` - Check URL accessibility
-  - `validate_doi()` - DOI format validation
-  - `extract_metadata()` - Scrape title/publisher
-  - `validate_file_upload()` - File type/size checks
-
-#### 2.3 Reference Service
-- **Reference Service** (`app/services/reference_service.py`)
-  - `create_reference(data, user)` - Submit new reference
-  - `get_reference(id)` - Retrieve single reference
-  - `list_references(filters, pagination)` - List with filters
-  - `search_references(query, filters)` - Advanced search
-  - `update_reference(id, data, user)` - Update (admin only)
-  - `delete_reference(id, user)` - Soft delete
-  - `get_reference_stats()` - Statistics
-- **File Upload Handler**
-  - PDF storage with UUID naming
-  - Virus scanning (ClamAV integration)
-  - Thumbnail generation
-
-#### 2.4 Reference API Routes
-- `POST /api/v1/references` - Submit (authenticated)
-- `GET /api/v1/references` - List verified (public)
-- `GET /api/v1/references/:id` - Get details (public)
-- `GET /api/v1/references/search` - Search (public)
-- `PUT /api/v1/references/:id` - Update (admin)
-- `DELETE /api/v1/references/:id` - Delete (admin)
-- `GET /api/v1/references/stats` - Statistics (public)
-
-#### 2.5 Features
-- Pagination helper for large result sets
-- Rate limiting for public endpoints
-- Search filters: country, category, status, media_type, date_range
-
-#### 2.6 Testing
-- Unit tests for reference service
-- Integration tests for all endpoints
-- File upload functionality tests
-- Search and filter tests
-- Rate limiting tests
-
-### Dependencies
-- Requires: Task 1 (auth, User model)
-- Blocks: Task 3 (verifications)
-
-### Duration: 2.5 weeks
-
----
-
-## TASK 3: Verification Workflow & Admin Dashboard
-
-**Developer 3 - Verification System Lead**
-
-### Objective
-Build verification workflow, admin dashboard APIs, and review queue management.
-
-### Deliverables
-
-#### 3.1 Verification Model
-- **Verification Model** (`app/models/verification.py`)
-  - Fields: id, reference_id, verifier_id, status, notes, flagged_for_global, verified_at
-  - Enum: status (credible/unreliable)
-  - Relationships: Reference, User (verifier)
-  - Indexes: reference_id, verifier_id, verified_at
-  - Audit log for verification history
-
-#### 3.2 Verification Service
-- **Verification Service** (`app/services/verification_service.py`)
-  - `get_pending_queue(country_code, user)` - Country admin queue
-  - `verify_reference(ref_id, status, notes, user)` - Verify/reject
-  - `flag_for_global_review(ref_id, reason, user)` - Escalate
-  - `get_verification_history(ref_id)` - History
-  - `get_verifier_stats(user_id)` - Verifier statistics
-  - `reassign_verification(ref_id, new_verifier, user)` - Reassign
-  - `bulk_verify(ref_ids, status, user)` - Bulk operations
-- **Notification System**
-  - Email notifications for new submissions
-  - In-app notification queue
-
-#### 3.3 Verification API Routes
-- `GET /api/v1/verifications/pending` - Pending queue (country admin)
-- `GET /api/v1/verifications/pending/global` - Global queue (global admin)
-- `PUT /api/v1/verifications/:id` - Update status
-- `POST /api/v1/verifications/:id/flag` - Flag for review
-- `GET /api/v1/verifications/:id/history` - History
-- `POST /api/v1/verifications/bulk` - Bulk verify
-- `GET /api/v1/verifications/stats` - Statistics
-
-#### 3.4 Admin API Routes
-- `GET /api/v1/admin/users` - List users (global admin)
-- `PUT /api/v1/admin/users/:id/role` - Update role
-- `POST /api/v1/admin/users/:id/assign-country` - Assign country
-- `GET /api/v1/admin/countries` - Manage countries
-- `POST /api/v1/admin/countries` - Add country
-- `PUT /api/v1/admin/countries/:code` - Update country
-- `GET /api/v1/admin/analytics` - Platform analytics
-
-#### 3.5 Analytics Service
-- Total submissions by country
-- Verification rate by country
-- Average verification time
-- Top verifiers by country
-- Reliability distribution
-- Export functionality (CSV, JSON)
-
-#### 3.6 Testing
-- Unit tests for verification service
-- Integration tests for verification endpoints
-- Role-based access control tests
-- Bulk operation tests
-- Analytics query performance tests
-
-### Dependencies
-- Requires: Task 1 (auth), Task 2 (references)
-
-### Duration: 2.5 weeks
-
----
-
-## TASK 4: Gamification & Community Engagement System
-
-**Developer 4 - Gamification Lead**
-
-### Objective
-Build gamification system with points, badges, leaderboards, and user statistics.
-
-### Deliverables
-
-#### 4.1 Gamification Models
-- **Badge Model** (`app/models/badge.py`)
-  - Fields: id, name, description, icon, requirement_type, requirement_value
-  - Enum: requirement_type (submissions/verifications/points)
-  - Method: `check_eligibility(user)`
-- **UserBadge Model** (junction table)
-  - Fields: user_id, badge_id, earned_at
-- Indexes for leaderboard queries
-
-#### 4.2 Point System
-- **Gamification Service** (`app/services/gamification_service.py`)
-  - `award_points(user, action, amount)` - Award points
-  - `calculate_submission_points(reference)` - Submission points
-  - `calculate_verification_points(verification)` - Verification points
-- **Point Values**
-  - Submit reference: 10 points
-  - Reference verified as credible: +20 bonus
-  - Verify reference: 5 points
-  - First submission in country: 50 bonus
-- Point transaction history
-- Leaderboard queries with caching
-
-#### 4.3 Badge System
-- **Badge Definitions** (seed data)
-  - **First Steps**: Submit first reference
-  - **Contributor**: 10 verified submissions
-  - **Expert**: 50 verified submissions
-  - **Guardian**: Verify 25 references
-  - **Country Champion**: Top in country
-  - **Global Leader**: Top 10 globally
-  - **Streak Master**: 7 consecutive days
-- **Badge Service Methods**
-  - `check_and_award_badges(user)` - Check eligibility
-  - `award_badge(user, badge)` - Award badge
-  - `get_user_badges(user_id)` - Get badges
-  - `get_badge_progress(user_id, badge_id)` - Progress
-- Badge seed script
-
-#### 4.4 Leaderboard System
-- **Leaderboard Methods**
-  - `get_global_leaderboard(limit, offset)` - Global top
-  - `get_country_leaderboard(country, limit, offset)` - Country top
-  - `get_user_rank(user_id)` - Global rank
-  - `get_user_country_rank(user_id)` - Country rank
-  - `get_trending_contributors(period)` - Week/month trending
-- Redis caching for leaderboards
-- Celery task for leaderboard updates
-
-#### 4.5 User Statistics
-- **Stats Methods**
-  - `get_user_stats(user_id)` - Complete statistics
-    - Total/verified submissions
-    - Rejection rate
-    - Total verifications
-    - Points and badges
-    - Ranks (global/country)
-    - Activity streak
-  - `get_user_activity_timeline(user_id)` - Recent activity
-  - `get_user_contributions_by_country(user_id)` - Breakdown
-
-#### 4.6 Gamification API Routes
-- `GET /api/v1/leaderboard` - Global leaderboard
-- `GET /api/v1/leaderboard/:country` - Country leaderboard
-- `GET /api/v1/users/:id/badges` - User badges
-- `GET /api/v1/users/:id/stats` - User statistics
-- `GET /api/v1/users/:id/activity` - Activity timeline
-- `GET /api/v1/badges` - List all badges
-- `GET /api/v1/badges/:id` - Badge details
-
-#### 4.7 Testing
-- Unit tests for gamification service
-- Integration tests for leaderboard endpoints
-- Badge awarding logic tests
-- Point calculation tests
-- Leaderboard caching tests
-
-### Dependencies
-- Requires: Task 1, 2, 3
-
-### Duration: 2 weeks
-
----
-
-## TASK 5: API Integration, Testing & Deployment Infrastructure
-
-**Developer 5 - DevOps & Integration Lead**
-
-### Objective
-Set up comprehensive testing, API documentation, deployment infrastructure, and integrations.
-
-### Deliverables
-
-#### 5.1 API Documentation
-- Flask-APISPEC setup for OpenAPI
-- Swagger UI at `/api/docs`
-- ReDoc at `/api/redoc`
-- Document all endpoints with:
-  - Request/response schemas
-  - Authentication requirements
-  - Examples
-  - Error codes
-- API versioning strategy
-- API changelog
-
-#### 5.2 Comprehensive Testing
-- **Test Configuration**
-  - pytest.ini setup
-  - Test fixtures (database, users, references)
-  - Mock Wikimedia OAuth responses
-- **Unit Tests**
-  - All service layer tests
-  - 80%+ code coverage target
-- **Integration Tests**
-  - Auth flow tests
-  - Reference CRUD tests
-  - Verification workflow tests
-  - Admin operations tests
-  - Gamification tests
-- **Coverage Reporting**
-  - HTML coverage reports
-  - CI/CD integration
-- Test data seeding script
-
-#### 5.3 Rate Limiting & Security
-- **Flask-Limiter Implementation**
-  - Public endpoints: 100 req/hour per IP
-  - Authenticated: 1000 req/hour per user
-  - Admin: 5000 req/hour
-- **Security Measures**
-  - Request validation middleware
-  - CORS configuration
-  - Security headers (CSP, X-Frame-Options, etc.)
-  - Input sanitization
-  - SQL injection prevention
-  - XSS protection
-
-#### 5.4 Logging & Monitoring
-- **Logging Setup**
-  - Flask logging configuration
-  - Rotating file handler
-  - JSON structured logging
-  - Request/response logging
-- **Error Tracking**
-  - Sentry integration
-  - Error alerting
-- **Performance Monitoring**
-  - Slow query logging
-  - Endpoint performance metrics
-  - Database query optimization
-
-#### 5.5 Deployment Infrastructure
-- **Docker Setup**
-  - Dockerfile for Flask app
-  - docker-compose.yml (web, db, redis, celery)
-  - Multi-stage builds
-  - Environment configuration
-- **CI/CD Pipeline**
-  - GitHub Actions workflow
-  - Automated testing
-  - Linting (flake8, black)
-  - Security scanning
-  - Automated deployment
-- **Wikimedia Toolforge Deployment**
-  - Deployment scripts
-  - Configuration templates
-  - Database setup scripts
-  - Service management
-
-#### 5.6 External Integrations
-- **Wikidata Integration**
-  - Link references to Wikidata items
-  - Publisher/website entity lookup
-- **Wikipedia Gadget API**
-  - Endpoint for citation checker
-  - Source verification lookup
-- **Email Service**
-  - SMTP configuration
-  - Email templates
-  - Notification system
-
-#### 5.7 Performance Optimization
-- Database indexing strategy
-- Redis caching implementation
-- Query optimization
-- Connection pooling
-- Async task processing (Celery)
-- CDN configuration for static assets
-
-#### 5.8 Documentation
-- Complete README with setup instructions
-- API documentation
-- Deployment guide
-- Contribution guidelines
-- Security best practices
-- Troubleshooting guide
-
-#### 5.9 Testing
-- End-to-end integration tests
-- Load testing (Locust)
-- Security testing
-- CI/CD pipeline tests
-
-### Dependencies
-- Requires: All tasks (1-4)
-
-### Duration: 2.5 weeks
-
----
-
-## Development Timeline
-
-| Week | Task 1 | Task 2 | Task 3 | Task 4 | Task 5 |
-|------|--------|--------|--------|--------|--------|
-| 1-2  | Auth & Infrastructure | - | - | - | - |
-| 3-4  | Testing | References | - | - | - |
-| 5    | Complete | References | Verifications | - | - |
-| 6-7  | - | Testing | Verifications | Gamification | - |
-| 8    | - | Complete | Testing | Gamification | Testing & Deployment |
-| 9    | - | - | Complete | Complete | Testing & Deployment |
-| 10   | - | - | - | - | Complete |
-
-## Communication & Coordination
-
-### Daily Standups
-- Progress updates
-- Blockers identification
-- Interface agreements
-
-### Integration Points
-- **Task 1 → All**: Auth middleware and User model
-- **Task 2 → Task 3**: Reference model and service
-- **Task 2,3 → Task 4**: User actions for points
-- **All → Task 5**: API endpoints for documentation
-
-### Shared Responsibilities
-- Code reviews across tasks
-- Integration testing between modules
-- API contract agreements
-- Database migration coordination
-
-## Success Criteria
-
-- [ ] All API endpoints functional and documented
-- [ ] 80%+ test coverage
-- [ ] Wikimedia OAuth working
-- [ ] Reference submission and verification workflow complete
-- [ ] Gamification system operational
-- [ ] Deployed to staging environment
-- [ ] Performance benchmarks met (< 200ms response time)
-- [ ] Security audit passed
-
-## Support & Resources
-
-- **Wikimedia OAuth**: https://meta.wikimedia.org/wiki/Special:OAuthConsumerRegistration
-- **Toolforge Docs**: https://wikitech.wikimedia.org/wiki/Portal:Toolforge
-- **Flask Docs**: https://flask.palletsprojects.com/
-- **SQLAlchemy Docs**: https://docs.sqlalchemy.org/
-
----
-
-For questions or issues, contact the project lead or create an issue in the repository.
+📘 WikiSourceVerifier – Project README & Task Assignment
+A community-powered platform to verify and catalogue credible references for Wikipedia and Wikimedia projects, organized by country and reliability.
+
+🎯 Project Goal
+To crowdsource, verify, and maintain a country-based database of credible references that strengthen citation practices across Wikipedia, especially in underrepresented languages and regions.
+
+🛠️ Tech Stack Overview
+Component	Technology Used
+Frontend	React + TailwindCSS
+Backend	Node.js (Express)
+Database	SQLite
+Auth	Wikimedia OAuth
+Hosting	Wikimedia Toolforge / VPS
+API	REST API
+🧩 Task Group Assignments
+Each group is assigned a distinct, equally weighted module of the project. All teams will collaborate through GitHub, weekly standups, and shared documentation.
+
+🧱 Group 1: Submission & Reference Intake
+Goal: Build the contributor-facing interface and backend logic for submitting references.
+
+Tasks:
+
+Design and implement the Reference Submission Form (React + Tailwind)
+
+Backend route: POST /submit-reference
+
+Fields:
+
+URL or file upload (PDF, DOI, book info)
+
+Country of origin
+
+Source category: Primary, Secondary, Not Reliable
+
+Optional Wikipedia article link
+
+Store submissions in SQLite with timestamp and contributor ID
+
+Validate inputs and sanitize uploads
+
+🛡️ Group 2: Verification Dashboard
+Goal: Build the admin interface and backend logic for country-based verification.
+
+Tasks:
+
+Create Verifier Dashboard (React)
+
+Backend routes:
+
+GET /pending-references
+
+POST /verify-reference
+
+POST /flag-reference
+
+SQLite schema for:
+
+Verification status
+
+Notes (e.g., “Academic publisher”, “Government-owned”)
+
+Verifier ID and timestamp
+
+Role-based access control for country admins
+
+📚 Group 3: Public Reference Directory
+Goal: Build the public-facing directory of verified sources.
+
+Tasks:
+
+Design searchable and filterable Reference Directory (React)
+
+Backend route: GET /references
+
+Filters:
+
+Country, Category, Reliability, Media Type
+
+Display:
+
+Title, Publisher, URL/DOI, Country, Date Verified, Verifier Name
+
+SQLite indexing for fast lookup
+
+Build REST API endpoint for Wikipedia tool integration
+
+🏅 Group 4: Gamification & Metrics
+Goal: Incentivize contributions and track community engagement.
+
+Tasks:
+
+Design contributor Leaderboard & Badge System
+
+Backend routes:
+
+GET /leaderboard
+
+POST /award-points
+
+SQLite schema for:
+
+Contributor points
+
+Badge levels
+
+Country-level stats
+
+Display top contributors per country
+
+Monthly engagement reports
+
+🔗 Group 5: Integration & Future Extensions
+Goal: Extend platform functionality and prepare for future Wikimedia integration.
+
+Tasks:
+
+Implement Wikimedia OAuth for contributor login
+
+Link verified sources to Wikidata properties
+
+Build Wikipedia gadget for citation pop-up
+
+Explore ML-based source reliability scoring (future phase)
+
+Backend routes:
+
+GET /wikidata-link
+
+GET /gadget-status
+
+🧭 Implementation Timeline
+Phase	Description	Duration
+Phase 1	Submission form + public list	2–3 weeks
+Phase 2	Admin dashboard	2 weeks
+Phase 3	OAuth + API	2 weeks
+Phase 4	Public beta (5–10 countries)	1 month
+Phase 5	Wikipedia tool integration	Later phase
+🌟 Benefits to Wikimedia Movement
+Reduces misinformation and unreliable citations
+
+Empowers local communities to vet sources
+
+Strengthens smaller Wikipedias (Dagbani, Twi, Fante, etc.)
+
+Builds an open, country-based dataset of verified sources
