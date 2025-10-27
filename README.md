@@ -16,6 +16,7 @@ A community-driven reference verification platform for Wikipedia editors and Wik
 - [Database Schema](#database-schema)
 - [Deployment Guide](#deployment-guide)
 - [Error Handling](#error-handling)
+- [Known Issues & Limitations](#known-issues--limitations)
 - [Troubleshooting](#troubleshooting)
 - [Changelog](#changelog)
 - [Contributing](#contributing)
@@ -1024,6 +1025,313 @@ All forms display errors using toast notifications for better user experience.
 
 ---
 
+## Known Issues & Limitations
+
+### Critical Issues
+
+#### 1. Wikimedia OAuth Callback Error
+**Status:** Not Working  
+**Description:** OAuth authentication flow completes successfully and users can authenticate with their Wikimedia account, but the callback handler fails to properly redirect users back to the frontend with authentication tokens.
+
+**Current Behavior:**
+- User clicks "Login with Wikimedia"
+- Successfully authenticates on Wikimedia
+- Callback receives user data
+- Error occurs during token response or redirect
+
+**Affected Files:**
+- `backend/src/controllers/authController.js` - `wikimediaCallback` function
+- `backend/src/routes/authRoutes.js` - OAuth callback route
+- `backend/src/config/passport.js` - Passport OAuth2 strategy
+
+**Workaround:** Use local authentication (email/password) instead of OAuth.
+
+**To Fix:** 
+- Review the `sendTokenResponse` function in OAuth callback
+- Ensure proper redirect to frontend with tokens
+- Check session handling and cookie configuration for OAuth flow
+
+---
+
+### Pages Not Fully Implemented
+
+#### 2. Settings Page
+**Status:** Frontend Complete, Backend Working, Integration Issues  
+**Description:** The settings page UI is fully implemented with notification preferences, privacy controls, and account settings, but some features may not persist correctly.
+
+**What Works:**
+- Settings retrieval (`GET /api/settings`)
+- Settings update (`PUT /api/settings`)
+- Settings reset (`POST /api/settings/reset`)
+
+**What Needs Work:**
+- Two-factor authentication (UI only, no backend implementation)
+- Email notification sending (settings save but emails not sent)
+- Session timeout enforcement
+- Account deletion functionality (button present but not connected)
+
+**Affected Files:**
+- `frontend/src/pages/Settings.tsx`
+- `backend/src/controllers/settingsController.js`
+- `backend/src/models/UserSettings.js`
+
+---
+
+#### 3. Analytics Page
+**Status:** Partially Implemented  
+**Description:** Analytics dashboard displays user statistics and performance metrics, but some advanced analytics features are incomplete.
+
+**What Works:**
+- User submission statistics
+- Approval rates
+- Points and badges display
+- Basic dashboard metrics
+
+**What Needs Work:**
+- Submission trends visualization (data fetched but charts not rendered)
+- Country statistics display
+- Category distribution charts
+- Time-period filtering may not update correctly
+- Export functionality not implemented
+
+**Affected Files:**
+- `frontend/src/pages/Analytics.tsx`
+- `backend/src/controllers/analyticsController.js`
+
+---
+
+#### 4. Notifications System
+**Status:** Backend Complete, Frontend Complete, Email Delivery Not Implemented  
+**Description:** In-app notifications work correctly, but email notifications are not sent.
+
+**What Works:**
+- Creating notifications
+- Marking as read/unread
+- Deleting notifications
+- Notification count badge
+
+**What Needs Work:**
+- Email delivery service integration (SendGrid, AWS SES, etc.)
+- Push notifications
+- Real-time notification updates (WebSocket/SSE)
+- Notification grouping and batching
+
+**Affected Files:**
+- `frontend/src/pages/Notifications.tsx`
+- `backend/src/controllers/notificationController.js`
+
+---
+
+#### 5. Bookmarks Feature
+**Status:** Fully Implemented, Minor Issues  
+**Description:** Bookmarks functionality is complete but could benefit from additional features.
+
+**What Works:**
+- Adding/removing bookmarks
+- Organizing into folders
+- Adding notes and tags
+- Filtering by folder
+
+**What Needs Work:**
+- Bulk operations (delete multiple, move multiple)
+- Search within bookmarks
+- Export bookmarks
+- Share bookmarks with other users
+
+**Affected Files:**
+- `frontend/src/pages/Bookmarks.tsx`
+- `backend/src/controllers/bookmarkController.js`
+
+---
+
+#### 6. Activity Feed
+**Status:** Fully Implemented  
+**Description:** Activity feed is working correctly for both personal and community activities.
+
+**Known Limitations:**
+- No real-time updates (requires page refresh)
+- Limited activity types tracked
+- No activity filtering by date range
+
+**Affected Files:**
+- `frontend/src/pages/ActivityFeed.tsx`
+- `backend/src/controllers/activityController.js`
+
+---
+
+#### 7. Help Page
+**Status:** Static Content Only  
+**Description:** Help page displays FAQ and guides but lacks interactive features.
+
+**What Needs Work:**
+- Search functionality within help content
+- Video tutorials (placeholders only)
+- Interactive guides
+- Contact support form
+- Live chat integration
+
+**Affected Files:**
+- `frontend/src/pages/Help.tsx`
+
+---
+
+### Backend Features Not Implemented
+
+#### 8. File Upload for PDF References
+**Status:** Partially Implemented  
+**Description:** Frontend has UI for PDF upload, but backend file handling is incomplete.
+
+**What Needs Work:**
+- File storage configuration (local vs cloud)
+- File validation and virus scanning
+- PDF text extraction for searchability
+- File size limits enforcement
+- Cleanup of orphaned files
+
+**Affected Files:**
+- `backend/src/controllers/submissionController.js`
+- `backend/src/routes/submissionRoutes.js`
+
+---
+
+#### 9. Email Service Integration
+**Status:** Not Implemented  
+**Description:** No email service is configured for sending notifications, password resets, or verification emails.
+
+**What Needs Work:**
+- Email service provider integration (SendGrid, AWS SES, Mailgun)
+- Email templates
+- Password reset flow
+- Email verification for new accounts
+- Weekly digest emails
+
+---
+
+#### 10. Advanced Search & Filtering
+**Status:** Basic Implementation Only  
+**Description:** Public directory has basic filtering, but advanced search features are missing.
+
+**What Needs Work:**
+- Full-text search across submissions
+- Advanced filter combinations
+- Search by DOI, ISBN, or other identifiers
+- Saved search queries
+- Search result export
+
+**Affected Files:**
+- `frontend/src/pages/PublicDirectory.tsx`
+- `backend/src/controllers/submissionController.js`
+
+---
+
+### Security & Performance Issues
+
+#### 11. Rate Limiting
+**Status:** Basic Implementation  
+**Description:** Rate limiting is configured globally but not fine-tuned per endpoint.
+
+**What Needs Work:**
+- Per-endpoint rate limits
+- User-based rate limiting (different limits for different roles)
+- Rate limit bypass for trusted IPs
+- Better rate limit error messages
+
+**Affected Files:**
+- `backend/src/server.js`
+
+---
+
+#### 12. Input Validation
+**Status:** Partially Implemented  
+**Description:** Basic validation exists but could be more comprehensive.
+
+**What Needs Work:**
+- URL validation and sanitization
+- DOI format validation
+- File type validation
+- XSS protection in user-generated content
+- SQL injection prevention (using Mongoose helps, but review needed)
+
+**Affected Files:**
+- `backend/src/middleware/validator.js`
+
+---
+
+### Features Mentioned in Documentation But Not Implemented
+
+#### 13. Wikidata Integration
+**Status:** Not Implemented  
+**Description:** README mentions Wikidata integration for publisher verification, but this is not implemented.
+
+**Affected Files:**
+- None (needs to be created)
+
+---
+
+#### 14. Public API with API Keys
+**Status:** Not Implemented  
+**Description:** No public API endpoint with API key authentication for external integrations.
+
+**What Needs Work:**
+- API key generation and management
+- API key authentication middleware
+- API documentation for external developers
+- Rate limiting per API key
+
+---
+
+#### 15. Batch Submission Upload
+**Status:** Not Implemented  
+**Description:** No functionality to upload multiple submissions at once via CSV or JSON.
+
+---
+
+#### 16. Export Functionality
+**Status:** Not Implemented  
+**Description:** No export options for submissions, user data, or reports (CSV, JSON, PDF).
+
+---
+
+### Minor Issues & Enhancements Needed
+
+#### 17. Dark Mode
+**Status:** Partial Support  
+**Description:** UI components have dark mode classes, but theme switching is not fully implemented.
+
+---
+
+#### 18. Mobile Responsiveness
+**Status:** Mostly Responsive  
+**Description:** Most pages are responsive, but some complex layouts may need adjustment for mobile devices.
+
+---
+
+#### 19. Accessibility
+**Status:** Basic Compliance  
+**Description:** Basic accessibility features present, but comprehensive WCAG 2.1 compliance not verified.
+
+---
+
+#### 20. Internationalization (i18n)
+**Status:** Not Implemented  
+**Description:** Application is English-only. Multi-language support is planned but not implemented.
+
+---
+
+## Contributing to Fix These Issues
+
+Developers are welcome to work on any of these issues! Please:
+
+1. Check the "Affected Files" section for each issue
+2. Create a new branch for your fix
+3. Test thoroughly before submitting a PR
+4. Update this section when an issue is resolved
+5. Add tests for new functionality
+
+For major features (OAuth fix, email service, etc.), please open an issue first to discuss the implementation approach.
+
+---
+
 ## Troubleshooting
 
 ### Common Issues
@@ -1281,6 +1589,7 @@ For issues, questions, or suggestions:
 
 **Built with ❤️ for the Wikipedia community**
 
-**Version:** 2.0.0  
-**Last Updated:** January 2025  
+**Version:** 1.0.0  
+**Last Updated:** October 2025  
 **Maintained By:** WikiSourceRef Team
+
