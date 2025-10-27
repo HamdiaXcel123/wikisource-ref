@@ -1,5 +1,20 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { BookOpen, Search, Upload, User, LogOut, Award, Shield, LogIn } from 'lucide-react';
+import { 
+  BookOpen, 
+  Search, 
+  Upload, 
+  User, 
+  LogOut, 
+  Award, 
+  Shield, 
+  LogIn,
+  Bell,
+  Settings as SettingsIcon,
+  BarChart3,
+  Activity,
+  Bookmark,
+  HelpCircle
+} from 'lucide-react';
 import { Button } from './ui/button';
 import { useAuth } from '../lib/auth-context';
 import {
@@ -20,7 +35,7 @@ export const Navigation: React.FC = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="border-b bg-white">
+    <nav className="border-b bg-white dark:bg-gray-800 dark:border-gray-700 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center space-x-8">
@@ -30,7 +45,7 @@ export const Navigation: React.FC = () => {
             >
               <BookOpen className="h-8 w-8" />
               <div className="flex flex-col items-start">
-                <span className="font-semibold">WikiSourceVerifier</span>
+                <span className="font-semibold">WikiSourceRef</span>
                 <span className="text-xs text-gray-500">Community Reference Platform</span>
               </div>
             </Link>
@@ -47,13 +62,24 @@ export const Navigation: React.FC = () => {
 
               {user && (
                 <>
+                  {user.role !== 'admin' && (
+                    <Button
+                      variant={isActive('/submit') ? 'default' : 'ghost'}
+                      onClick={() => navigate('/submit')}
+                      className="flex items-center space-x-2"
+                    >
+                      <Upload className="h-4 w-4" />
+                      <span>Submit</span>
+                    </Button>
+                  )}
+
                   <Button
-                    variant={isActive('/submit') ? 'default' : 'ghost'}
-                    onClick={() => navigate('/submit')}
+                    variant={isActive('/analytics') ? 'default' : 'ghost'}
+                    onClick={() => navigate('/analytics')}
                     className="flex items-center space-x-2"
                   >
-                    <Upload className="h-4 w-4" />
-                    <span>Submit</span>
+                    <BarChart3 className="h-4 w-4" />
+                    <span>Analytics</span>
                   </Button>
 
                   {(user.role === 'admin' || user.role === 'verifier') && (
@@ -68,6 +94,15 @@ export const Navigation: React.FC = () => {
                   )}
                 </>
               )}
+              
+              <Button
+                variant={isActive('/help') ? 'default' : 'ghost'}
+                onClick={() => navigate('/help')}
+                className="flex items-center space-x-2"
+              >
+                <HelpCircle className="h-4 w-4" />
+                <span>Help</span>
+              </Button>
             </div>
           </div>
 
@@ -95,9 +130,22 @@ export const Navigation: React.FC = () => {
                     <User className="h-4 w-4 mr-2" />
                     Profile
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/profile')}>
-                    <Award className="h-4 w-4 mr-2" />
-                    Badges ({user.badges.length})
+                  <DropdownMenuItem onClick={() => navigate('/notifications')}>
+                    <Bell className="h-4 w-4 mr-2" />
+                    Notifications
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/bookmarks')}>
+                    <Bookmark className="h-4 w-4 mr-2" />
+                    Bookmarks
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/activity')}>
+                    <Activity className="h-4 w-4 mr-2" />
+                    Activity Feed
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate('/settings')}>
+                    <SettingsIcon className="h-4 w-4 mr-2" />
+                    Settings
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={logout}>
@@ -128,14 +176,16 @@ export const Navigation: React.FC = () => {
 
           {user && (
             <>
-              <Button
-                variant={isActive('/submit') ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => navigate('/submit')}
-              >
-                <Upload className="h-4 w-4 mr-1" />
-                Submit
-              </Button>
+              {user.role !== 'admin' && (
+                <Button
+                  variant={isActive('/submit') ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => navigate('/submit')}
+                >
+                  <Upload className="h-4 w-4 mr-1" />
+                  Submit
+                </Button>
+              )}
 
               {(user.role === 'admin' || user.role === 'verifier') && (
                 <Button

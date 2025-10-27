@@ -224,6 +224,14 @@ export const changePassword = async (req, res, next) => {
 
     const user = await User.findById(req.user.id).select('+password');
 
+    // Check if user uses local auth
+    if (user.authProvider !== 'local') {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot change password for OAuth users'
+      });
+    }
+
     // Check current password
     const isMatch = await user.comparePassword(currentPassword);
 
@@ -235,6 +243,60 @@ export const changePassword = async (req, res, next) => {
     }
 
     user.password = newPassword;
+    await user.save();
+
+    sendTokenResponse(user, 200, res);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Wikimedia OAuth callback
+// @route   GET /api/auth/wikimedia/callback
+// @access  Public
+export const wikimediaCallback = async (req, res, next) => {
+  try {
+    const user = req.user;
+    
+    if (!user) {
+      return res.redirect(`${process.env.FRONTEND_URL}/auth?error=authentication_failed`);
+    }
+
+    // Check if user needs to set country
+    if (user.country === 'Unknown') {
+      return res.redirect(`${process.env.FRONTEND_URL}/auth?setup=true&userId=${user._id}`);
+    }
+
+    sendTokenResponse(user, 200, res);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Complete Wikimedia OAuth setup
+// @route   POST /api/auth/wikimedia/setup
+// @access  Public
+export const completeWikimediaSetup = async (req, res, next) => {
+  try {
+    const { userId, country } = req.body;
+
+    if (!userId || !country) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID and country are required'
+      });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    user.country = country;
     await user.save();
 
     sendTokenResponse(user, 200, res);

@@ -6,6 +6,12 @@ const submissionSchema = new mongoose.Schema({
     required: [true, 'URL is required'],
     trim: true
   },
+  doi: {
+    type: String,
+    trim: true,
+    sparse: true,
+    match: [/^10\.\d{4,9}\/[-._;()/:A-Z0-9]+$/i, 'Please provide a valid DOI']
+  },
   title: {
     type: String,
     required: [true, 'Title is required'],
@@ -18,6 +24,18 @@ const submissionSchema = new mongoose.Schema({
     trim: true,
     maxlength: [100, 'Publisher cannot exceed 100 characters']
   },
+  mediaType: {
+    type: String,
+    enum: ['article', 'book', 'journal', 'website', 'pdf', 'video', 'podcast', 'other'],
+    default: 'article'
+  },
+  publicationDate: {
+    type: Date
+  },
+  authors: [{
+    type: String,
+    trim: true
+  }],
   country: {
     type: String,
     required: [true, 'Country is required']
@@ -64,7 +82,25 @@ const submissionSchema = new mongoose.Schema({
   tags: [{
     type: String,
     trim: true
-  }]
+  }],
+  reliabilityScore: {
+    type: Number,
+    min: 0,
+    max: 100,
+    default: null
+  },
+  wikidataId: {
+    type: String,
+    trim: true
+  },
+  language: {
+    type: String,
+    default: 'en'
+  },
+  accessDate: {
+    type: Date,
+    default: Date.now
+  }
 }, {
   timestamps: true
 });

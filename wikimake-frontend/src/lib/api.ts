@@ -100,6 +100,12 @@ class ApiClient {
       const data = await response.json();
 
       if (!response.ok) {
+        // Handle validation errors (array of errors)
+        if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+          const errorMessages = data.errors.map((err: any) => err.message || err.msg).join(', ');
+          throw new Error(errorMessages);
+        }
+        // Handle single error message
         throw new Error(data.message || 'An error occurred');
       }
 
@@ -108,7 +114,8 @@ class ApiClient {
       if (error instanceof Error) {
         throw error;
       }
-      throw new Error('Network error occurred');
+      // Handle network errors
+      throw new Error('Network error: Unable to connect to server. Please check your connection.');
     }
   }
 
@@ -166,6 +173,15 @@ export const authApi = {
 
   changePassword: (currentPassword: string, newPassword: string) =>
     api.put('/auth/password', { currentPassword, newPassword }),
+
+  // Wikimedia OAuth
+  getWikimediaAuthUrl: () => {
+    const baseUrl = API_URL.replace('/api', '');
+    return `${baseUrl}/api/auth/wikimedia`;
+  },
+
+  completeWikimediaSetup: (userId: string, country: string) =>
+    api.post('/auth/wikimedia/setup', { userId, country }),
 };
 
 // Submission API
@@ -179,6 +195,10 @@ export const submissionApi = {
     wikipediaArticle?: string;
     fileType?: string;
     fileName?: string;
+    doi?: string;
+    mediaType?: string;
+    authors?: string[];
+    publicationDate?: string;
   }) => api.post('/submissions', data),
 
   getAll: (params?: {

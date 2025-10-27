@@ -19,7 +19,7 @@ import {
   getCountryFlag,
   getCountryName,
   getReliabilityColor,
-} from '../lib/mock-data';
+} from '../lib/constants';
 import { submissionApi } from '../lib/api';
 import { toast } from 'sonner';
 
@@ -36,8 +36,11 @@ interface Submission {
   wikipediaArticle?: string;
   verifierNotes?: string;
   verifiedAt?: string;
+  verifiedDate?: string;
   fileType?: string;
   fileName?: string;
+  mediaType?: string;
+  reliability?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -53,6 +56,7 @@ export const PublicDirectory: React.FC<PublicDirectoryProps> = ({ onNavigate }) 
   const [filterCountry, setFilterCountry] = useState<string>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('approved');
+  const [filterReliability, setFilterReliability] = useState<string>('all');
   const [filterMediaType, setFilterMediaType] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('date-desc');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');

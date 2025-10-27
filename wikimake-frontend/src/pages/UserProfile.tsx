@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -6,31 +6,51 @@ import { Progress } from '../components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { useAuth } from '../lib/auth-context';
 import {
-  getSubmissions,
-  BADGES,
   getCountryFlag,
   getCountryName,
   getCategoryIcon,
   getCategoryColor,
   getStatusColor,
-} from '../lib/mock-data';
+} from '../lib/constants';
+import { submissionApi } from '../lib/api';
+import { toast } from 'sonner';
 import { Award, TrendingUp, Calendar, CheckCircle, Clock, XCircle } from 'lucide-react';
 
 export const UserProfile: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      loadSubmissions();
+    }
+  }, [user]);
+
+  const loadSubmissions = async () => {
+    setLoading(true);
+    try {
+      const response = await submissionApi.getMy();
+      if (response.success) {
+        setSubmissions(response.submissions || []);
+      }
+    } catch (error) {
+      console.error('Failed to load submissions:', error);
+      toast.error('Failed to load your submissions');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const userStats = useMemo(() => {
     if (!user) return null;
 
-    const submissions = getSubmissions();
-    const userSubmissions = submissions.filter((s) => s.submitterId === user.id);
-
-    const totalSubmissions = userSubmissions.length;
-    const verified = userSubmissions.filter((s) => s.status === 'verified').length;
-    const pending = userSubmissions.filter((s) => s.status === 'pending').length;
-    const rejected = userSubmissions.filter((s) => s.status === 'rejected').length;
-    const credible = userSubmissions.filter((s) => s.reliability === 'credible').length;
+    const totalSubmissions = submissions.length;
+    const verified = submissions.filter((s) => s.status === 'approved').length;
+    const pending = submissions.filter((s) => s.status === 'pending').length;
+    const rejected = submissions.filter((s) => s.status === 'rejected').length;
+    const credible = verified; // All approved submissions are credible
 
     const verificationRate =
       totalSubmissions > 0 ? Math.round((verified / totalSubmissions) * 100) : 0;
@@ -45,19 +65,16 @@ export const UserProfile: React.FC = () => {
       credible,
       verificationRate,
       successRate,
-      submissions: userSubmissions,
+      submissions,
     };
-  }, [user]);
+  }, [user, submissions]);
 
   const userBadges = useMemo(() => {
     if (!user) return [];
-    return BADGES.filter((badge) => user.badges.includes(badge.id));
+    // User badges from API are already complete badge objects
+    return user.badges;
   }, [user]);
 
-  const lockedBadges = useMemo(() => {
-    if (!user) return [];
-    return BADGES.filter((badge) => !user.badges.includes(badge.id));
-  }, [user]);
 
   const nextMilestone = useMemo(() => {
     if (!user) return null;
@@ -92,15 +109,15 @@ export const UserProfile: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
       <div className="mb-8">
-        <h1 className="mb-2">My Profile</h1>
-        <p className="text-gray-600">Track your contributions and achievements</p>
+        <h1 className="mb-2 dark:text-white">My Profile</h1>
+        <p className="text-gray-600 dark:text-gray-300">Track your contributions and achievements</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* User Info Card */}
         <Card className="lg:col-span-1">
           <CardHeader className="text-center">
-            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-3xl">{getCountryFlag(user.country)}</span>
             </div>
             <CardTitle>{user.username}</CardTitle>
@@ -108,21 +125,21 @@ export const UserProfile: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Role</span>
+              <span className="text-gray-600 dark:text-gray-400">Role</span>
               <Badge variant="secondary" className="capitalize">
                 {user.role}
               </Badge>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Country</span>
-              <span>{getCountryName(user.country)}</span>
+              <span className="text-gray-600 dark:text-gray-400">Country</span>
+              <span className="dark:text-gray-300">{getCountryName(user.country)}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Member Since</span>
-              <span>{user.joinDate}</span>
+              <span className="text-gray-600 dark:text-gray-400">Member Since</span>
+              <span className="dark:text-gray-300">{user.joinDate}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Total Points</span>
+              <span className="text-gray-600 dark:text-gray-400">Total Points</span>
               <Badge variant="default" className="text-lg px-4">
                 {user.points}
               </Badge>
@@ -250,13 +267,15 @@ export const UserProfile: React.FC = () => {
                 </p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {userBadges.map((badge) => (
-                    <Card key={badge.id} className="bg-gradient-to-br from-amber-50 to-yellow-50">
+                  {userBadges.map((badge, index) => (
+                    <Card key={index} className="bg-gradient-to-br from-amber-50 to-yellow-50">
                       <CardContent className="pt-6">
                         <div className="text-center">
                           <div className="text-5xl mb-3">{badge.icon}</div>
                           <h4 className="mb-1">{badge.name}</h4>
-                          <p className="text-sm text-gray-600">{badge.description}</p>
+                          <p className="text-sm text-gray-600">
+                            Earned {new Date(badge.earnedAt).toLocaleDateString()}
+                          </p>
                         </div>
                       </CardContent>
                     </Card>
@@ -265,33 +284,6 @@ export const UserProfile: React.FC = () => {
               )}
             </CardContent>
           </Card>
-
-          {/* Locked Badges */}
-          {lockedBadges.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <span>Available Badges ({lockedBadges.length})</span>
-                </CardTitle>
-                <CardDescription>Keep contributing to unlock these badges</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {lockedBadges.map((badge) => (
-                    <Card key={badge.id} className="bg-gray-50 opacity-60">
-                      <CardContent className="pt-6">
-                        <div className="text-center">
-                          <div className="text-5xl mb-3 grayscale">{badge.icon}</div>
-                          <h4 className="mb-1 text-gray-600">{badge.name}</h4>
-                          <p className="text-sm text-gray-500">{badge.description}</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </TabsContent>
 
         <TabsContent value="submissions">
@@ -303,7 +295,11 @@ export const UserProfile: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {userStats?.submissions.length === 0 ? (
+              {loading ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-500">Loading submissions...</p>
+                </div>
+              ) : userStats?.submissions.length === 0 ? (
                 <div className="text-center py-12">
                   <p className="text-gray-500 mb-4">No submissions yet</p>
                   <button
@@ -330,23 +326,28 @@ export const UserProfile: React.FC = () => {
                               >
                                 {submission.category}
                               </Badge>
-                              <Badge
-                                variant="outline"
-                                className={getStatusColor(submission.status)}
-                              >
-                                {submission.status}
-                              </Badge>
-                              {submission.reliability && (
+                              {submission.status === 'approved' && (
                                 <Badge
                                   variant="outline"
-                                  className={
-                                    submission.reliability === 'credible'
-                                      ? 'bg-green-100 text-green-800 border-green-300'
-                                      : 'bg-red-100 text-red-800 border-red-300'
-                                  }
+                                  className="bg-green-100 text-green-800 border-green-300"
                                 >
-                                  {submission.reliability === 'credible' ? '✅' : '❌'}{' '}
-                                  {submission.reliability}
+                                  ✅ Approved
+                                </Badge>
+                              )}
+                              {submission.status === 'rejected' && (
+                                <Badge
+                                  variant="outline"
+                                  className="bg-red-100 text-red-800 border-red-300"
+                                >
+                                  ❌ Rejected
+                                </Badge>
+                              )}
+                              {submission.status === 'pending' && (
+                                <Badge
+                                  variant="outline"
+                                  className="bg-yellow-100 text-yellow-800 border-yellow-300"
+                                >
+                                  ⏳ Pending
                                 </Badge>
                               )}
                               <Badge variant="outline">
@@ -355,11 +356,11 @@ export const UserProfile: React.FC = () => {
                             </div>
                             <div className="flex items-center space-x-2 text-xs text-gray-500">
                               <Calendar className="h-3 w-3" />
-                              <span>Submitted {submission.submittedDate}</span>
-                              {submission.verifiedDate && (
+                              <span>Submitted {new Date(submission.createdAt).toLocaleDateString()}</span>
+                              {submission.verifiedAt && (
                                 <>
                                   <span>•</span>
-                                  <span>Verified {submission.verifiedDate}</span>
+                                  <span>Verified {new Date(submission.verifiedAt).toLocaleDateString()}</span>
                                 </>
                               )}
                             </div>

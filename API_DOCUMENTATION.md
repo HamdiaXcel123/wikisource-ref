@@ -1,4 +1,21 @@
-# WikiSource Verifier API Documentation
+# WikiSource Ref API Documentation
+
+## Table of Contents
+- [Authentication Endpoints](#authentication-endpoints)
+- [Submission Endpoints](#submission-endpoints)
+- [User Endpoints](#user-endpoints)
+- [Activity Endpoints](#activity-endpoints)
+- [Analytics Endpoints](#analytics-endpoints)
+- [Bookmark Endpoints](#bookmark-endpoints)
+- [Notification Endpoints](#notification-endpoints)
+- [Settings Endpoints](#settings-endpoints)
+- [Error Responses](#error-responses)
+- [Rate Limiting](#rate-limiting)
+- [User Roles](#user-roles)
+- [Gamification System](#gamification-system)
+- [Setup Instructions](#setup-instructions)
+
+---
 
 ## Base URL
 ```
@@ -210,7 +227,7 @@ Update user profile information.
 ### Change Password
 **PUT** `/auth/password`
 
-Change user password.
+Change user password (local auth only).
 
 **Headers:** `Authorization: Bearer <token>`
 
@@ -232,6 +249,65 @@ Change user password.
 }
 ```
 
+**Note:** OAuth users cannot change passwords through this endpoint.
+
+---
+
+### Wikimedia OAuth Login
+**GET** `/auth/wikimedia`
+
+Initiate Wikimedia OAuth 2.0 authentication flow.
+
+**Response:** Redirects to Wikimedia OAuth authorization page
+
+---
+
+### Wikimedia OAuth Callback
+**GET** `/auth/wikimedia/callback`
+
+OAuth callback endpoint (handled automatically by Passport).
+
+**Response:** 
+- Success: Redirects to frontend with tokens
+- New user without country: Redirects to setup page
+- Error: Redirects to frontend with error parameter
+
+---
+
+### Complete Wikimedia Setup
+**POST** `/auth/wikimedia/setup`
+
+Complete OAuth setup by providing country information.
+
+**Request Body:**
+```json
+{
+  "userId": "507f1f77bcf86cd799439011",
+  "country": "Ghana"
+}
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+  "refreshToken": "eyJhbGciOiJIUzI1NiIs...",
+  "user": {
+    "id": "507f1f77bcf86cd799439011",
+    "username": "wikimediauser",
+    "wikimediaUsername": "wikimediauser",
+    "authProvider": "wikimedia",
+    "country": "Ghana",
+    "role": "contributor",
+    "points": 0,
+    "badges": [],
+    "joinDate": "2025-01-15T10:30:00.000Z",
+    "isActive": true
+  }
+}
+```
+
 ---
 
 ## Submission Endpoints
@@ -247,14 +323,29 @@ Submit a new reference for verification.
 ```json
 {
   "url": "https://example.com/article",
+  "doi": "10.1234/example.2024",
   "title": "Climate Change Report 2024",
   "publisher": "Ghana Environmental Agency",
+  "mediaType": "article",
+  "authors": ["John Doe", "Jane Smith"],
+  "publicationDate": "2024-01-15",
   "country": "Ghana",
   "category": "secondary",
   "wikipediaArticle": "https://en.wikipedia.org/wiki/Climate_change",
-  "fileType": "url"
+  "fileType": "url",
+  "language": "en"
 }
 ```
+
+**Optional Fields:**
+- `doi`: Digital Object Identifier
+- `mediaType`: article, book, journal, website, pdf, video, podcast, other
+- `authors`: Array of author names
+- `publicationDate`: ISO date string
+- `wikipediaArticle`: Wikipedia article URL
+- `fileName`: For PDF uploads
+- `wikidataId`: Wikidata identifier
+- `language`: ISO language code (default: en)
 
 **Response (201):**
 ```json
@@ -754,6 +845,642 @@ Activate a user account (admin only).
 
 ---
 
+## Activity Endpoints
+
+### Get User Activities
+**GET** `/activities`
+
+Get activity history for the authenticated user.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Query Parameters:**
+- `page` (optional, default: 1): Page number
+- `limit` (optional, default: 20): Items per page
+- `type` (optional): Filter by activity type
+
+**Activity Types:**
+- `submission_created`
+- `submission_verified`
+- `badge_earned`
+- `role_changed`
+- `profile_updated`
+- `login`
+- `logout`
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "activities": [
+    {
+      "id": "507f1f77bcf86cd799439014",
+      "user": "507f1f77bcf86cd799439011",
+      "type": "submission_created",
+      "description": "Created a new submission",
+      "metadata": {
+        "submissionId": "507f1f77bcf86cd799439012"
+      },
+      "ipAddress": "192.168.1.1",
+      "userAgent": "Mozilla/5.0...",
+      "createdAt": "2025-01-15T10:30:00.000Z"
+    }
+  ],
+  "pagination": {
+    "total": 50,
+    "page": 1,
+    "pages": 3
+  }
+}
+```
+
+**Note:** Activities are automatically deleted after 180 days.
+
+---
+
+### Get Community Activities
+**GET** `/activities/community`
+
+Get public activity feed from all users.
+
+**Query Parameters:**
+- `page` (optional, default: 1): Page number
+- `limit` (optional, default: 20): Items per page
+- `type` (optional): Filter by activity type
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "activities": [
+    {
+      "id": "507f1f77bcf86cd799439014",
+      "user": {
+        "id": "507f1f77bcf86cd799439011",
+        "username": "johndoe",
+        "country": "Ghana",
+        "role": "contributor",
+        "badges": []
+      },
+      "type": "submission_created",
+      "description": "Created a new submission",
+      "metadata": {},
+      "createdAt": "2025-01-15T10:30:00.000Z"
+    }
+  ],
+  "pagination": {
+    "total": 200,
+    "page": 1,
+    "pages": 10
+  }
+}
+```
+
+---
+
+## Analytics Endpoints
+
+### Get Dashboard Statistics
+**GET** `/analytics/dashboard`
+
+Get comprehensive dashboard statistics for the authenticated user.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "stats": {
+    "user": {
+      "submissions": 15,
+      "approved": 12,
+      "pending": 2,
+      "points": 150,
+      "badges": 3,
+      "recentActivity": 8
+    },
+    "global": {
+      "totalSubmissions": 500,
+      "pendingVerification": 50,
+      "totalUsers": 250,
+      "totalVerifiers": 25
+    }
+  }
+}
+```
+
+**Note:** Global stats are only available for verifiers and admins.
+
+---
+
+### Get Submission Trends
+**GET** `/analytics/trends`
+
+Get submission trends over time.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Query Parameters:**
+- `period` (optional, default: 30d): Time period (7d, 30d, 90d)
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "trends": [
+    {
+      "_id": {
+        "date": "2025-01-15",
+        "status": "approved"
+      },
+      "count": 12
+    },
+    {
+      "_id": {
+        "date": "2025-01-15",
+        "status": "pending"
+      },
+      "count": 5
+    }
+  ]
+}
+```
+
+---
+
+### Get Category Distribution
+**GET** `/analytics/categories`
+
+Get distribution of submissions by category.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "distribution": [
+    {
+      "_id": "secondary",
+      "count": 350
+    },
+    {
+      "_id": "primary",
+      "count": 100
+    },
+    {
+      "_id": "unreliable",
+      "count": 50
+    }
+  ]
+}
+```
+
+---
+
+### Get Country Statistics
+**GET** `/analytics/countries`
+
+Get submission statistics by country (top 20).
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "countryStats": [
+    {
+      "_id": "Ghana",
+      "total": 150,
+      "approved": 120,
+      "pending": 20,
+      "rejected": 10
+    },
+    {
+      "_id": "Nigeria",
+      "total": 120,
+      "approved": 100,
+      "pending": 15,
+      "rejected": 5
+    }
+  ]
+}
+```
+
+---
+
+### Get User Performance
+**GET** `/analytics/performance/:userId?`
+
+Get performance metrics for a user. If no userId is provided, returns data for authenticated user.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "performance": {
+    "submissions": 15,
+    "verifications": 8,
+    "activities": 45,
+    "approvalRate": 80.00
+  }
+}
+```
+
+---
+
+## Bookmark Endpoints
+
+### Get Bookmarks
+**GET** `/bookmarks`
+
+Get all bookmarks for the authenticated user.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Query Parameters:**
+- `page` (optional, default: 1): Page number
+- `limit` (optional, default: 20): Items per page
+- `folder` (optional): Filter by folder name
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "bookmarks": [
+    {
+      "id": "507f1f77bcf86cd799439015",
+      "user": "507f1f77bcf86cd799439011",
+      "submission": {
+        "id": "507f1f77bcf86cd799439012",
+        "title": "Climate Change Report 2024",
+        "url": "https://example.com/article",
+        "submitter": {
+          "username": "johndoe",
+          "country": "Ghana"
+        }
+      },
+      "notes": "Important reference for my research",
+      "tags": ["climate", "research"],
+      "folder": "research",
+      "createdAt": "2025-01-15T10:30:00.000Z"
+    }
+  ],
+  "folders": ["default", "research", "favorites"],
+  "pagination": {
+    "total": 25,
+    "page": 1,
+    "pages": 2
+  }
+}
+```
+
+---
+
+### Add Bookmark
+**POST** `/bookmarks`
+
+Bookmark a submission.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request Body:**
+```json
+{
+  "submissionId": "507f1f77bcf86cd799439012",
+  "notes": "Important reference for my research",
+  "tags": ["climate", "research"],
+  "folder": "research"
+}
+```
+
+**Response (201):**
+```json
+{
+  "success": true,
+  "message": "Bookmark added",
+  "bookmark": {
+    "id": "507f1f77bcf86cd799439015",
+    "user": "507f1f77bcf86cd799439011",
+    "submission": { ... },
+    "notes": "Important reference for my research",
+    "tags": ["climate", "research"],
+    "folder": "research",
+    "createdAt": "2025-01-15T10:30:00.000Z"
+  }
+}
+```
+
+---
+
+### Update Bookmark
+**PUT** `/bookmarks/:id`
+
+Update a bookmark's notes, tags, or folder.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request Body:**
+```json
+{
+  "notes": "Updated notes",
+  "tags": ["climate", "research", "important"],
+  "folder": "favorites"
+}
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Bookmark updated",
+  "bookmark": { ... }
+}
+```
+
+---
+
+### Delete Bookmark
+**DELETE** `/bookmarks/:id`
+
+Remove a bookmark.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Bookmark removed"
+}
+```
+
+---
+
+### Check Bookmark Status
+**GET** `/bookmarks/check/:submissionId`
+
+Check if a submission is bookmarked by the authenticated user.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "bookmarked": true,
+  "bookmark": {
+    "id": "507f1f77bcf86cd799439015",
+    "notes": "Important reference",
+    "tags": ["climate"],
+    "folder": "research"
+  }
+}
+```
+
+---
+
+## Notification Endpoints
+
+### Get Notifications
+**GET** `/notifications`
+
+Get notifications for the authenticated user.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Query Parameters:**
+- `page` (optional, default: 1): Page number
+- `limit` (optional, default: 20): Items per page
+- `unreadOnly` (optional, default: false): Show only unread notifications
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "notifications": [
+    {
+      "id": "507f1f77bcf86cd799439016",
+      "user": "507f1f77bcf86cd799439011",
+      "type": "submission_approved",
+      "title": "Submission Approved",
+      "message": "Your submission 'Climate Change Report 2024' has been approved!",
+      "link": "/submissions/507f1f77bcf86cd799439012",
+      "read": false,
+      "metadata": {
+        "submissionId": "507f1f77bcf86cd799439012",
+        "points": 25
+      },
+      "createdAt": "2025-01-16T14:20:00.000Z"
+    }
+  ],
+  "pagination": {
+    "total": 30,
+    "page": 1,
+    "pages": 2
+  },
+  "unreadCount": 5
+}
+```
+
+**Notification Types:**
+- `submission_approved`
+- `submission_rejected`
+- `badge_earned`
+- `new_verifier`
+- `points_earned`
+- `comment_reply`
+- `system_announcement`
+- `verification_request`
+
+**Note:** Notifications are automatically deleted after 90 days.
+
+---
+
+### Mark Notification as Read
+**PUT** `/notifications/:id/read`
+
+Mark a specific notification as read.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "notification": {
+    "id": "507f1f77bcf86cd799439016",
+    "read": true,
+    ...
+  }
+}
+```
+
+---
+
+### Mark All Notifications as Read
+**PUT** `/notifications/read-all`
+
+Mark all notifications as read for the authenticated user.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "All notifications marked as read"
+}
+```
+
+---
+
+### Delete Notification
+**DELETE** `/notifications/:id`
+
+Delete a notification.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Notification deleted"
+}
+```
+
+---
+
+## Settings Endpoints
+
+### Get User Settings
+**GET** `/settings`
+
+Get settings for the authenticated user. Creates default settings if none exist.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "settings": {
+    "id": "507f1f77bcf86cd799439017",
+    "user": "507f1f77bcf86cd799439011",
+    "notifications": {
+      "email": {
+        "enabled": true,
+        "submissionApproved": true,
+        "submissionRejected": true,
+        "badgeEarned": true,
+        "weeklyDigest": true
+      },
+      "push": {
+        "enabled": false,
+        "submissionApproved": true,
+        "submissionRejected": true,
+        "badgeEarned": true
+      },
+      "inApp": {
+        "enabled": true,
+        "submissionApproved": true,
+        "submissionRejected": true,
+        "badgeEarned": true,
+        "verificationRequest": true
+      }
+    },
+    "privacy": {
+      "profileVisibility": "public",
+      "showEmail": false,
+      "showCountry": true,
+      "showBadges": true,
+      "showActivity": true,
+      "allowMessages": true
+    },
+    "display": {
+      "theme": "system",
+      "language": "en",
+      "itemsPerPage": 20,
+      "compactMode": false
+    },
+    "account": {
+      "twoFactorEnabled": false,
+      "sessionTimeout": 30,
+      "autoLogout": false
+    },
+    "createdAt": "2025-01-15T10:30:00.000Z",
+    "updatedAt": "2025-01-15T10:30:00.000Z"
+  }
+}
+```
+
+---
+
+### Update User Settings
+**PUT** `/settings`
+
+Update user settings. Only provided fields will be updated (deep merge).
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request Body:**
+```json
+{
+  "notifications": {
+    "email": {
+      "weeklyDigest": false
+    }
+  },
+  "display": {
+    "theme": "dark",
+    "itemsPerPage": 50
+  },
+  "privacy": {
+    "profileVisibility": "community"
+  }
+}
+```
+
+**Valid Values:**
+- `privacy.profileVisibility`: public, community, private
+- `display.theme`: light, dark, system
+- `display.itemsPerPage`: 10-100
+- `account.sessionTimeout`: 5-1440 (minutes)
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Settings updated successfully",
+  "settings": { ... }
+}
+```
+
+---
+
+### Reset Settings
+**POST** `/settings/reset`
+
+Reset all settings to default values.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Settings reset to default",
+  "settings": { ... }
+}
+```
+
+---
+
 ## Error Responses
 
 All endpoints may return the following error responses:
@@ -880,7 +1607,7 @@ cp .env.example .env
 ```env
 PORT=5000
 NODE_ENV=development
-MONGODB_URI=mongodb://localhost:27017/wikisource-verifier
+MONGODB_URI=mongodb://localhost:27017/wikisource-ref
 JWT_SECRET=your-super-secret-jwt-key
 JWT_REFRESH_SECRET=your-super-secret-refresh-key
 JWT_EXPIRE=15m

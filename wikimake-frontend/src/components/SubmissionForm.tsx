@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { useAuth } from '../lib/auth-context';
-import { COUNTRIES } from '../lib/mock-data';
+import { COUNTRIES } from '../lib/constants';
 import { submissionApi } from '../lib/api';
 import { toast } from 'sonner';
 import { Upload, Link2, FileText, CheckCircle, AlertCircle } from 'lucide-react';
@@ -163,7 +163,7 @@ export const SubmissionForm: React.FC<SubmissionFormProps> = ({ onNavigate }) =>
               <Label>Submission Type *</Label>
               <RadioGroup
                 value={submissionType}
-                onValueChange={(value) => setSubmissionType(value as 'url' | 'pdf')}
+                onValueChange={(value: string) => setSubmissionType(value as 'url' | 'pdf')}
                 className="flex space-x-4"
               >
                 <div className="flex items-center space-x-2">
@@ -271,7 +271,7 @@ export const SubmissionForm: React.FC<SubmissionFormProps> = ({ onNavigate }) =>
               <Label>Source Category *</Label>
               <RadioGroup
                 value={category}
-                onValueChange={(value) => setCategory(value as any)}
+                onValueChange={(value: string) => setCategory(value as 'primary' | 'secondary' | 'unreliable')}
                 className="space-y-3"
               >
                 <div className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">

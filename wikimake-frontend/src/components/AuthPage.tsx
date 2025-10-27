@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { useAuth } from '../lib/auth-context';
-import { COUNTRIES } from '../lib/mock-data';
+import { COUNTRIES } from '../lib/constants';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
@@ -70,7 +70,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onNavigate }) => {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="mb-2">Welcome to WikiSourceVerifier</h1>
+          <h1 className="mb-2">Welcome to WikiSourceRef</h1>
           <p className="text-gray-600">Sign in or create an account to get started</p>
         </div>
 
@@ -114,14 +114,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onNavigate }) => {
                     />
                   </div>
 
-                  <div className="bg-blue-50 p-4 rounded-md">
-                    <p className="text-sm text-blue-800">
-                      <strong>Demo accounts:</strong>
-                      <br />• WikiEditor2024 (Contributor)
-                      <br />• SourceVerifier (Verifier)
-                      <br />• AdminUser (Admin)
-                    </p>
-                  </div>
 
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? (

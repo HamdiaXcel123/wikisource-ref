@@ -12,17 +12,30 @@ const userSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    required: [true, 'Email is required'],
     unique: true,
+    sparse: true,
     lowercase: true,
     trim: true,
     match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email']
   },
   password: {
     type: String,
-    required: [true, 'Password is required'],
     minlength: [6, 'Password must be at least 6 characters'],
     select: false
+  },
+  // Wikimedia OAuth fields
+  wikimediaId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  wikimediaUsername: {
+    type: String
+  },
+  authProvider: {
+    type: String,
+    enum: ['local', 'wikimedia'],
+    default: 'local'
   },
   country: {
     type: String,
@@ -61,9 +74,9 @@ const userSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Hash password before saving
+// Hash password before saving (only for local auth)
 userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) {
+  if (!this.isModified('password') || !this.password) {
     return next();
   }
   

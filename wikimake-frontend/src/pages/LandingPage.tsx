@@ -39,19 +39,19 @@ export const LandingPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center">
           <div className="flex justify-center mb-6">
-            <div className="p-4 bg-blue-100 rounded-full">
-              <BookOpen className="h-16 w-16 text-blue-600" />
+            <div className="p-4 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+              <BookOpen className="h-16 w-16 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
-          <h1 className="mb-4 text-gray-900">
+          <h1 className="mb-4 text-gray-900 dark:text-white">
             Community-Driven Reference Verification for Wikipedia
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-8">
             Help maintain the quality and reliability of Wikipedia sources through collaborative verification.
             Join thousands of editors in ensuring accurate, trustworthy references.
           </p>
@@ -115,36 +115,36 @@ export const LandingPage: React.FC = () => {
 
         {/* How It Works */}
         <div className="mt-24">
-          <h2 className="text-center mb-12 text-gray-900">How It Works</h2>
+          <h2 className="text-center mb-12 text-gray-900 dark:text-white">How It Works</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+              <div className="bg-blue-100 dark:bg-blue-900/30 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">1️⃣</span>
               </div>
-              <h3 className="mb-2">Submit References</h3>
-              <p className="text-gray-600">
+              <h3 className="mb-2 dark:text-white">Submit References</h3>
+              <p className="text-gray-600 dark:text-gray-300">
                 Upload URLs or PDFs of sources you've used in Wikipedia articles. Categorize them as
                 primary, secondary, or potentially unreliable.
               </p>
             </div>
 
             <div className="text-center">
-              <div className="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+              <div className="bg-green-100 dark:bg-green-900/30 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">2️⃣</span>
               </div>
-              <h3 className="mb-2">Community Verification</h3>
-              <p className="text-gray-600">
+              <h3 className="mb-2 dark:text-white">Community Verification</h3>
+              <p className="text-gray-600 dark:text-gray-300">
                 Country-based verifiers review submissions for credibility, editorial standards, and
                 reliability using established Wikipedia guidelines.
               </p>
             </div>
 
             <div className="text-center">
-              <div className="bg-purple-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+              <div className="bg-purple-100 dark:bg-purple-900/30 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">3️⃣</span>
               </div>
-              <h3 className="mb-2">Build Reputation</h3>
-              <p className="text-gray-600">
+              <h3 className="mb-2 dark:text-white">Build Reputation</h3>
+              <p className="text-gray-600 dark:text-gray-300">
                 Earn points and badges for contributions. Become a country expert and help maintain
                 the world's largest encyclopedia.
               </p>
@@ -154,7 +154,7 @@ export const LandingPage: React.FC = () => {
 
         {/* Features */}
         <div className="mt-24">
-          <h2 className="text-center mb-12 text-gray-900">Key Features</h2>
+          <h2 className="text-center mb-12 text-gray-900 dark:text-white">Key Features</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
@@ -209,8 +209,8 @@ export const LandingPage: React.FC = () => {
         {/* Leaderboard Preview */}
         <div className="mt-24">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-gray-900">Top Contributors</h2>
-            <Button variant="outline" onClick={() => navigate('/directory')}>
+            <h2 className="text-gray-900 dark:text-white">Top Contributors</h2>
+            <Button variant="outline" onClick={() => navigate('/directory')} className="dark:border-gray-700 dark:text-gray-300">
               View All
             </Button>
           </div>
@@ -218,26 +218,26 @@ export const LandingPage: React.FC = () => {
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-gray-50 dark:bg-gray-800">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Rank
                       </th>
-                      <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         User
                       </th>
-                      <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Country
                       </th>
-                      <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Points
                       </th>
-                      <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Verified
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {leaderboard.map((entry, index) => (
                       <tr key={entry.id || entry.username}>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -248,10 +248,10 @@ export const LandingPage: React.FC = () => {
                             <span>{index + 1}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">{entry.username}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">{entry.country}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">{entry.points}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">{entry.badges?.length || 0}</td>
+                        <td className="px-6 py-4 whitespace-nowrap dark:text-gray-300">{entry.username}</td>
+                        <td className="px-6 py-4 whitespace-nowrap dark:text-gray-300">{entry.country}</td>
+                        <td className="px-6 py-4 whitespace-nowrap dark:text-gray-300">{entry.points}</td>
+                        <td className="px-6 py-4 whitespace-nowrap dark:text-gray-300">{entry.badges?.length || 0}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -262,9 +262,9 @@ export const LandingPage: React.FC = () => {
         </div>
 
         {/* CTA Section */}
-        <div className="mt-24 bg-blue-50 rounded-lg p-12 text-center">
-          <h2 className="mb-4 text-gray-900">Ready to Get Started?</h2>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+        <div className="mt-24 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-12 text-center">
+          <h2 className="mb-4 text-gray-900 dark:text-white">Ready to Get Started?</h2>
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
             Join our community of Wikipedia editors dedicated to maintaining high-quality,
             verifiable references.
           </p>

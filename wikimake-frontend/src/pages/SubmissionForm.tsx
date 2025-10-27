@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 import { useAuth } from '../lib/auth-context';
-import { COUNTRIES } from '../lib/mock-data';
+import { COUNTRIES } from '../lib/constants';
 import { submissionApi } from '../lib/api';
 import { toast } from 'sonner';
 import { Upload, Link2, FileText, CheckCircle, AlertCircle } from 'lucide-react';
@@ -25,6 +25,10 @@ export const SubmissionForm: React.FC = () => {
   const [category, setCategory] = useState<'primary' | 'secondary' | 'unreliable'>('secondary');
   const [wikipediaArticle, setWikipediaArticle] = useState('');
   const [fileName, setFileName] = useState('');
+  const [doi, setDoi] = useState('');
+  const [mediaType, setMediaType] = useState('article');
+  const [authors, setAuthors] = useState('');
+  const [publicationDate, setPublicationDate] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,9 +65,25 @@ export const SubmissionForm: React.FC = () => {
     }
 
     // Validation
-    if (submissionType === 'url' && !validateUrl(url)) {
-      toast.error('Please enter a valid URL');
+    if (!title.trim()) {
+      toast.error('Please enter a title for the reference');
       return;
+    }
+
+    if (!publisher.trim()) {
+      toast.error('Please enter the publisher name');
+      return;
+    }
+
+    if (submissionType === 'url') {
+      if (!url.trim()) {
+        toast.error('Please enter a URL');
+        return;
+      }
+      if (!validateUrl(url)) {
+        toast.error('Please enter a valid URL (must start with http:// or https://)');
+        return;
+      }
     }
 
     if (submissionType === 'pdf' && !fileName) {
@@ -72,18 +92,15 @@ export const SubmissionForm: React.FC = () => {
     }
 
     if (!country) {
-      toast.error('Please select a country');
-      return;
-    }
-
-    if (!title || !publisher) {
-      toast.error('Please fill in all required fields');
+      toast.error('Please select a country for this reference');
       return;
     }
 
     setLoading(true);
 
     try {
+      const authorsArray = authors.split(',').map(a => a.trim()).filter(a => a);
+      
       const response = await submissionApi.create({
         url: submissionType === 'url' ? url : `https://uploads.wikisource.org/${fileName}`,
         title,
@@ -93,6 +110,10 @@ export const SubmissionForm: React.FC = () => {
         wikipediaArticle: wikipediaArticle || undefined,
         fileType: submissionType,
         fileName: submissionType === 'pdf' ? fileName : undefined,
+        doi: doi || undefined,
+        mediaType,
+        authors: authorsArray.length > 0 ? authorsArray : undefined,
+        publicationDate: publicationDate || undefined,
       });
 
       if (response.success) {
@@ -110,11 +131,17 @@ export const SubmissionForm: React.FC = () => {
       setCategory('secondary');
       setWikipediaArticle('');
       setFileName('');
+      setDoi('');
+      setMediaType('article');
+      setAuthors('');
+      setPublicationDate('');
 
       // Navigate to directory
       setTimeout(() => navigate('/directory'), 1500);
     } catch (error) {
-      toast.error('Submission failed. Please try again.');
+      console.error('Submission error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Submission failed. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -141,11 +168,19 @@ export const SubmissionForm: React.FC = () => {
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
       <div className="mb-8">
-        <h1 className="mb-2">Submit Reference for Verification</h1>
-        <p className="text-gray-600">
+        <h1 className="mb-2 dark:text-white">Submit Reference for Verification</h1>
+        <p className="text-gray-600 dark:text-gray-300">
           Help improve Wikipedia's source quality by submitting references for community review.
         </p>
       </div>
+
+      {/* User Info Alert */}
+      <Alert className="mb-6">
+        <CheckCircle className="h-4 w-4" />
+        <AlertDescription>
+          Submitting as <strong>{user.username}</strong> ({user.country}) • You'll earn 10 points for each submission
+        </AlertDescription>
+      </Alert>
 
       <Card>
         <CardHeader>
@@ -241,6 +276,67 @@ export const SubmissionForm: React.FC = () => {
                 value={publisher}
                 onChange={(e) => setPublisher(e.target.value)}
                 required
+              />
+            </div>
+
+            {/* DOI (Optional) */}
+            <div className="space-y-2">
+              <Label htmlFor="doi">DOI (Optional)</Label>
+              <Input
+                id="doi"
+                type="text"
+                placeholder="10.1000/xyz123"
+                value={doi}
+                onChange={(e) => setDoi(e.target.value)}
+              />
+              <p className="text-sm text-gray-500">
+                Digital Object Identifier for academic papers
+              </p>
+            </div>
+
+            {/* Media Type */}
+            <div className="space-y-2">
+              <Label htmlFor="mediaType">Media Type</Label>
+              <Select value={mediaType} onValueChange={setMediaType}>
+                <SelectTrigger id="mediaType">
+                  <SelectValue placeholder="Select media type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="article">Article</SelectItem>
+                  <SelectItem value="book">Book</SelectItem>
+                  <SelectItem value="journal">Journal</SelectItem>
+                  <SelectItem value="website">Website</SelectItem>
+                  <SelectItem value="pdf">PDF Document</SelectItem>
+                  <SelectItem value="video">Video</SelectItem>
+                  <SelectItem value="podcast">Podcast</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Authors (Optional) */}
+            <div className="space-y-2">
+              <Label htmlFor="authors">Authors (Optional)</Label>
+              <Input
+                id="authors"
+                type="text"
+                placeholder="John Doe, Jane Smith"
+                value={authors}
+                onChange={(e) => setAuthors(e.target.value)}
+              />
+              <p className="text-sm text-gray-500">
+                Separate multiple authors with commas
+              </p>
+            </div>
+
+            {/* Publication Date (Optional) */}
+            <div className="space-y-2">
+              <Label htmlFor="publicationDate">Publication Date (Optional)</Label>
+              <Input
+                id="publicationDate"
+                type="date"
+                value={publicationDate}
+                onChange={(e) => setPublicationDate(e.target.value)}
               />
             </div>
 

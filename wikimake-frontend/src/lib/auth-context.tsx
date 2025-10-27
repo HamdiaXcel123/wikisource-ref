@@ -9,7 +9,7 @@ export interface User {
   country: string;
   role: 'contributor' | 'verifier' | 'admin';
   points: number;
-  badges: Array<{ name: string; icon: string; earnedAt: string }>;
+  badges: Array<{ id: string; name: string; icon: string; description: string; earnedAt: string }>;
   joinDate: string;
   isActive: boolean;
 }

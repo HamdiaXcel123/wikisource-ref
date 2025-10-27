@@ -6,7 +6,20 @@ import User from '../models/User.js';
 // @access  Private
 export const createSubmission = async (req, res, next) => {
   try {
-    const { url, title, publisher, country, category, wikipediaArticle, fileType, fileName } = req.body;
+    const { 
+      url, 
+      title, 
+      publisher, 
+      country, 
+      category, 
+      wikipediaArticle, 
+      fileType, 
+      fileName,
+      doi,
+      mediaType,
+      authors,
+      publicationDate
+    } = req.body;
 
     const submission = await Submission.create({
       url,
@@ -17,6 +30,10 @@ export const createSubmission = async (req, res, next) => {
       wikipediaArticle,
       fileType: fileType || 'url',
       fileName,
+      doi,
+      mediaType: mediaType || 'article',
+      authors,
+      publicationDate,
       submitter: req.user.id
     });
 

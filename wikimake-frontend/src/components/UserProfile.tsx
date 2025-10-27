@@ -5,15 +5,35 @@ import { Progress } from './ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { useAuth } from '../lib/auth-context';
 import {
-  getSubmissions,
-  BADGES,
   getCountryFlag,
   getCountryName,
   getCategoryIcon,
   getCategoryColor,
   getStatusColor,
-} from '../lib/mock-data';
+} from '../lib/constants';
 import { Award, TrendingUp, Calendar, CheckCircle, Clock, XCircle } from 'lucide-react';
+
+interface Submission {
+  id: string;
+  url: string;
+  title: string;
+  publisher: string;
+  country: string;
+  category: string;
+  status: string;
+  submitter?: any;
+  verifier?: any;
+  wikipediaArticle?: string;
+  verifierNotes?: string;
+  verifiedAt?: string;
+  verifiedDate?: string;
+  fileType?: string;
+  fileName?: string;
+  mediaType?: string;
+  reliability?: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 interface UserProfileProps {
   onNavigate: (page: string) => void;
@@ -25,40 +45,23 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onNavigate }) => {
   const userStats = useMemo(() => {
     if (!user) return null;
 
-    const submissions = getSubmissions();
-    const userSubmissions = submissions.filter((s) => s.submitterId === user.id);
-
-    const totalSubmissions = userSubmissions.length;
-    const verified = userSubmissions.filter((s) => s.status === 'verified').length;
-    const pending = userSubmissions.filter((s) => s.status === 'pending').length;
-    const rejected = userSubmissions.filter((s) => s.status === 'rejected').length;
-    const credible = userSubmissions.filter((s) => s.reliability === 'credible').length;
-
-    const verificationRate =
-      totalSubmissions > 0 ? Math.round((verified / totalSubmissions) * 100) : 0;
-    const successRate =
-      verified > 0 ? Math.round((credible / verified) * 100) : 0;
-
+    // Stats should come from API or props
     return {
-      totalSubmissions,
-      verified,
-      pending,
-      rejected,
-      credible,
-      verificationRate,
-      successRate,
-      submissions: userSubmissions,
+      totalSubmissions: 0,
+      verified: 0,
+      pending: 0,
+      rejected: 0,
+      credible: 0,
+      verificationRate: 0,
+      successRate: 0,
+      submissions: [] as Submission[],
     };
   }, [user]);
 
   const userBadges = useMemo(() => {
     if (!user) return [];
-    return BADGES.filter((badge) => user.badges.includes(badge.id));
-  }, [user]);
-
-  const lockedBadges = useMemo(() => {
-    if (!user) return [];
-    return BADGES.filter((badge) => !user.badges.includes(badge.id));
+    // User badges should come from API
+    return user.badges || [];
   }, [user]);
 
   const nextMilestone = useMemo(() => {
@@ -267,33 +270,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onNavigate }) => {
               )}
             </CardContent>
           </Card>
-
-          {/* Locked Badges */}
-          {lockedBadges.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <span>Available Badges ({lockedBadges.length})</span>
-                </CardTitle>
-                <CardDescription>Keep contributing to unlock these badges</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {lockedBadges.map((badge) => (
-                    <Card key={badge.id} className="bg-gray-50 opacity-60">
-                      <CardContent className="pt-6">
-                        <div className="text-center">
-                          <div className="text-5xl mb-3 grayscale">{badge.icon}</div>
-                          <h4 className="mb-1 text-gray-600">{badge.name}</h4>
-                          <p className="text-sm text-gray-500">{badge.description}</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </TabsContent>
 
         <TabsContent value="submissions">
@@ -357,7 +333,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onNavigate }) => {
                             </div>
                             <div className="flex items-center space-x-2 text-xs text-gray-500">
                               <Calendar className="h-3 w-3" />
-                              <span>Submitted {submission.submittedDate}</span>
+                              <span>Submitted {submission.createdAt}</span>
                               {submission.verifiedDate && (
                                 <>
                                   <span>•</span>

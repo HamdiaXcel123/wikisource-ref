@@ -19,7 +19,7 @@ import {
   getCountryFlag,
   getCountryName,
   getReliabilityColor,
-} from '../lib/mock-data';
+} from '../lib/constants';
 import { submissionApi } from '../lib/api';
 import { toast } from 'sonner';
 
@@ -160,8 +160,8 @@ export const PublicDirectory: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
       <div className="mb-8">
-        <h1 className="mb-2">Verified Reference Directory</h1>
-        <p className="text-gray-600">
+        <h1 className="mb-2 dark:text-white">Verified Reference Directory</h1>
+        <p className="text-gray-600 dark:text-gray-300">
           Browse and search community-verified sources for Wikipedia articles
         </p>
       </div>
@@ -170,7 +170,7 @@ export const PublicDirectory: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Total Sources</CardTitle>
+            <CardTitle className="text-sm text-gray-600 dark:text-gray-400">Total Sources</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl">{stats.total}</div>
@@ -179,7 +179,7 @@ export const PublicDirectory: React.FC = () => {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Credible</CardTitle>
+            <CardTitle className="text-sm text-gray-600 dark:text-gray-400">Credible</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl text-green-600">{stats.credible}</div>
@@ -188,7 +188,7 @@ export const PublicDirectory: React.FC = () => {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Countries</CardTitle>
+            <CardTitle className="text-sm text-gray-600 dark:text-gray-400">Countries</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl text-blue-600">{stats.countries}</div>
@@ -197,7 +197,7 @@ export const PublicDirectory: React.FC = () => {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Primary Sources</CardTitle>
+            <CardTitle className="text-sm text-gray-600 dark:text-gray-400">Primary Sources</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl text-purple-600">{stats.primary}</div>
@@ -377,8 +377,19 @@ export const PublicDirectory: React.FC = () => {
 
                 <div className="flex items-center space-x-2 text-xs text-gray-500 pt-2 border-t">
                   <Calendar className="h-3 w-3" />
-                  <span>Verified {submission.verifiedDate}</span>
+                  <span>
+                    {submission.verifiedAt 
+                      ? `Verified ${new Date(submission.verifiedAt).toLocaleDateString()}`
+                      : `Submitted ${new Date(submission.createdAt).toLocaleDateString()}`
+                    }
+                  </span>
                 </div>
+
+                {submission.submitter && (
+                  <div className="text-xs text-gray-500">
+                    Submitted by <strong>{submission.submitter.username}</strong>
+                  </div>
+                )}
 
                 {submission.verifierNotes && (
                   <div className="bg-gray-50 p-2 rounded text-xs">
@@ -400,8 +411,8 @@ export const PublicDirectory: React.FC = () => {
                     <TableHead>Publisher</TableHead>
                     <TableHead>Country</TableHead>
                     <TableHead>Category</TableHead>
-                    <TableHead>Reliability</TableHead>
-                    <TableHead>Verified</TableHead>
+                    <TableHead>Submitter</TableHead>
+                    <TableHead>Date</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -427,16 +438,14 @@ export const PublicDirectory: React.FC = () => {
                           {submission.category}
                         </Badge>
                       </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={getReliabilityColor(submission.reliability)}
-                        >
-                          {submission.reliability === 'credible' ? '✅ Credible' : '❌ Unreliable'}
-                        </Badge>
+                      <TableCell className="text-sm">
+                        {submission.submitter?.username || 'Unknown'}
                       </TableCell>
                       <TableCell className="whitespace-nowrap text-sm">
-                        {submission.verifiedDate}
+                        {submission.verifiedAt 
+                          ? new Date(submission.verifiedAt).toLocaleDateString()
+                          : new Date(submission.createdAt).toLocaleDateString()
+                        }
                       </TableCell>
                       <TableCell>
                         <Button
